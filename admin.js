@@ -6,9 +6,9 @@
 // =================================================
 
 const STORAGE_KEY   = 'oxkey_portfolio_data';
-const CREDS_KEY     = 'oxkey_admin_creds';
-const DEFAULT_USER  = 'admin';
-const DEFAULT_PASS  = '0xKey@2026';
+const CREDS_KEY     = 'oxkey_admin_creds_v2';
+const DEFAULT_USER  = '0xKeyAdmin';
+const DEFAULT_HASH  = 'e66d6ee9eec41bb7a3345da0cd326e53c9a89a23091bfc36d2a77aba06c13824';
 
 /* ─── CRYPTO ──────────────────────────────────── */
 async function sha256(str) {
@@ -23,8 +23,7 @@ async function getStoredCreds() {
     try { return JSON.parse(raw); } catch (_) {}
   }
   // First run — initialize defaults
-  const hash = await sha256(DEFAULT_PASS);
-  const creds = { username: DEFAULT_USER, passwordHash: hash };
+  const creds = { username: DEFAULT_USER, passwordHash: DEFAULT_HASH };
   localStorage.setItem(CREDS_KEY, JSON.stringify(creds));
   return creds;
 }
