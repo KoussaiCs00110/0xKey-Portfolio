@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel — 0xKey Portfolio</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="./img/0xkey.png" type="image/png">
+  <link rel="stylesheet" href="admin.css?v=2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ─── LOGIN SCREEN ─────────────────────────────────── -->
+<div class="login-screen" id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <span class="logo-bracket">[</span>
+      <span class="logo-text">0xKey</span>
+      <span class="logo-bracket">]</span>
+    </div>
+    <h1 class="login-title">Admin Panel</h1>
+    <p class="login-sub">Authorized access only</p>
+
+    <form class="login-form" id="login-form" novalidate>
+      <div class="field-group">
+        <label for="l-user">Username</label>
+        <div class="input-wrap">
+          <span class="input-icon">▸</span>
+          <input type="text" id="l-user" name="username" autocomplete="username"
+                 placeholder="Enter username" required>
+        </div>
+      </div>
+      <div class="field-group">
+        <label for="l-pass">Password</label>
+        <div class="input-wrap">
+          <span class="input-icon">▸</span>
+          <input type="password" id="l-pass" name="password" autocomplete="current-password"
+                 placeholder="Enter password" required>
+          <button type="button" class="eye-toggle" id="eye-toggle" aria-label="Show/hide password">👁</button>
+        </div>
+      </div>
+      <div class="login-error" id="login-error"></div>
+      <button type="submit" class="btn btn-primary btn-full" id="login-btn">
+        <span id="login-btn-text">Access Panel</span>
+      </button>
+    </form>
+
+    <div class="login-hint">
+      Default: <code>admin</code> / <code>0xKey@2026</code>
+    </div>
+
+    <a href="./index.html" class="back-link">← Back to Portfolio</a>
+  </div>
+
+  <!-- Particle canvas for login bg -->
+  <canvas id="login-canvas"></canvas>
+</div>
+
+<!-- ─── DASHBOARD ─────────────────────────────────────── -->
+<div class="dashboard" id="dashboard" style="display:none">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-bracket">[</span>
+      <span class="logo-text">0xKey</span>
+      <span class="logo-bracket">]</span>
+      <span class="sidebar-badge">ADMIN</span>
+    </div>
+
+    <div style="background: rgba(225, 29, 72, 0.1); border-left: 3px solid #e11d48; padding: 0.8rem; margin: 0 1rem 1.5rem; border-radius: 4px; font-size: 0.75rem; color: var(--text);">
+      <strong>Netlify Deployment:</strong> Remember that changes made here only save to your local browser! To make them public, go to <b>Settings &rarr; Export JSON</b> and overwrite <code>portfolio-data.json</code> in GitHub.
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="tab-btn active" data-tab="hero">🏠 Hero</button>
+      <button class="tab-btn" data-tab="about">👤 About</button>
+      <button class="tab-btn" data-tab="skills">⚡ Skills</button>
+      <button class="tab-btn" data-tab="projects">🗂 Projects</button>
+      <button class="tab-btn" data-tab="achievements">🏆 Achievements</button>
+      <button class="tab-btn" data-tab="certificates">📜 Certificates</button>
+      <button class="tab-btn" data-tab="links">🔗 Links</button>
+      <button class="tab-btn" data-tab="contact">✉ Contact</button>
+      <button class="tab-btn" data-tab="settings">⚙ Settings</button>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="./index.html" target="_blank" class="sidebar-preview-btn">↗ Preview Site</a>
+      <button class="btn btn-danger" id="logout-btn">Logout</button>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="dash-main">
+
+    <!-- Header bar -->
+    <header class="dash-header">
+      <div>
+        <h2 class="dash-section-title" id="dash-title">Hero</h2>
+        <p class="dash-sub">Editing live portfolio content</p>
+      </div>
+      <div class="dash-actions">
+        <button class="btn btn-secondary" id="reset-btn">↺ Reset to Default</button>
+        <button class="btn btn-primary" id="save-btn">💾 Save Changes</button>
+      </div>
+    </header>
+
+    <!-- ── TAB: HERO ── -->
+    <section class="tab-panel active" id="tab-hero">
+      <div class="panel-grid">
+        <div class="field-group">
+          <label for="h-handle">Handle / Name</label>
+          <input type="text" id="h-handle" placeholder="0xKey">
+        </div>
+        <div class="field-group">
+          <label for="h-tagline">Tagline</label>
+          <input type="text" id="h-tagline" placeholder="Cybersecurity Student • CTF Player">
+        </div>
+        <div class="field-group">
+          <label for="h-github">GitHub URL</label>
+          <input type="url" id="h-github" placeholder="https://github.com/...">
+        </div>
+        <div class="field-group field-full">
+          <label>Badges (one per line: emoji Text)</label>
+          <textarea id="h-badges" rows="7" placeholder="🛡️ Cybersecurity Student&#10;🎯 CTF Player"></textarea>
+          <span class="field-hint">Format: emoji space text — e.g. 🛡️ Cybersecurity Student</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── TAB: ABOUT ── -->
+    <section class="tab-panel" id="tab-about">
+      <div class="panel-grid">
+        <div class="field-group field-full">
+          <label>Bio Paragraphs (one paragraph per block)</label>
+          <textarea id="ab-bio1" rows="4" placeholder="First paragraph..."></textarea>
+        </div>
+        <div class="field-group field-full">
+          <textarea id="ab-bio2" rows="4" placeholder="Second paragraph..."></textarea>
+        </div>
+        <div class="field-group field-full">
+          <textarea id="ab-bio3" rows="4" placeholder="Third paragraph..."></textarea>
+        </div>
+        <div class="field-group">
+          <label>Stat 1 — Value</label>
+          <input type="text" id="st-val1" placeholder="50+">
+        </div>
+        <div class="field-group">
+          <label>Stat 1 — Label</label>
+          <input type="text" id="st-lbl1" placeholder="CTFs Played">
+        </div>
+        <div class="field-group">
+          <label>Stat 2 — Value</label>
+          <input type="text" id="st-val2" placeholder="4">
+        </div>
+        <div class="field-group">
+          <label>Stat 2 — Label</label>
+          <input type="text" id="st-lbl2" placeholder="Projects">
+        </div>
+        <div class="field-group">
+          <label>Stat 3 — Value</label>
+          <input type="text" id="st-val3" placeholder="6">
+        </div>
+        <div class="field-group">
+          <label>Stat 3 — Label</label>
+          <input type="text" id="st-lbl3" placeholder="Months Learning">
+        </div>
+      </div>
+    </section>
+
+    <!-- ── TAB: SKILLS ── -->
+    <section class="tab-panel" id="tab-skills">
+      <div class="panel-grid">
+        <div class="field-group field-full">
+          <label>Skills (one per line: Name,Percent)</label>
+          <textarea id="sk-bars" rows="8" placeholder="Digital Forensics,70&#10;Reverse Engineering,65"></textarea>
+          <span class="field-hint">Format: Skill Name,Percentage (0–100) — e.g. Digital Forensics,70</span>
+        </div>
+        <div class="field-group field-full">
+          <label>Tools / Badges (comma-separated)</label>
+          <input type="text" id="sk-tools" placeholder="Ghidra, IDA Pro, Wireshark, ...">
+        </div>
+      </div>
+    </section>
+
+    <!-- ── TAB: PROJECTS ── -->
+    <section class="tab-panel" id="tab-projects">
+      <div id="projects-editor"></div>
+      <button class="btn btn-secondary add-btn" id="add-project-btn">+ Add Project</button>
+    </section>
+
+    <!-- ── TAB: ACHIEVEMENTS ── -->
+    <section class="tab-panel" id="tab-achievements">
+      <div id="achievements-editor"></div>
+      <button class="btn btn-secondary add-btn" id="add-achievement-btn">+ Add Achievement</button>
+    </section>
+
+    <!-- ── TAB: CERTIFICATES ── -->
+    <section class="tab-panel" id="tab-certificates">
+      <div id="certificates-editor"></div>
+      <button class="btn btn-secondary add-btn" id="add-certificate-btn">+ Add Certificate</button>
+    </section>
+
+    <!-- ── TAB: LINKS ── -->
+    <section class="tab-panel" id="tab-links">
+      <div class="panel-grid">
+        <!-- LinkedIn -->
+        <div class="field-group">
+          <label>LinkedIn — URL</label>
+          <input type="url" id="lk-linkedin-url" placeholder="https://linkedin.com/in/...">
+        </div>
+        <div class="field-group">
+          <label>LinkedIn — Description</label>
+          <input type="text" id="lk-linkedin-desc" placeholder="Professional network...">
+        </div>
+        <!-- GitHub -->
+        <div class="field-group">
+          <label>GitHub — URL</label>
+          <input type="url" id="lk-github-url" placeholder="https://github.com/...">
+        </div>
+        <div class="field-group">
+          <label>GitHub — Description</label>
+          <input type="text" id="lk-github-desc" placeholder="Open source projects...">
+        </div>
+        <!-- Telegram -->
+        <div class="field-group">
+          <label>Telegram — URL</label>
+          <input type="url" id="lk-telegram-url" placeholder="https://t.me/...">
+        </div>
+        <div class="field-group">
+          <label>Telegram — Description</label>
+          <input type="text" id="lk-telegram-desc" placeholder="Quick messages...">
+        </div>
+      </div>
+    </section>
+
+    <!-- ── TAB: CONTACT ── -->
+    <section class="tab-panel" id="tab-contact">
+      <div class="panel-grid">
+        <div class="field-group">
+          <label>Email Address</label>
+          <input type="email" id="ct-email" placeholder="you@example.com">
+        </div>
+        <div class="field-group">
+          <label>Telegram URL</label>
+          <input type="url" id="ct-telegram" placeholder="https://t.me/...">
+        </div>
+        <div class="field-group field-full">
+          <label>Contact Description</label>
+          <textarea id="ct-desc" rows="3" placeholder="Whether you have a question..."></textarea>
+        </div>
+        <div class="field-group field-full">
+          <label>Footer Text</label>
+          <input type="text" id="ft-text" placeholder="© 2026 0xKey. Built with...">
+        </div>
+      </div>
+    </section>
+
+    <!-- ── TAB: SETTINGS ── -->
+    <section class="tab-panel" id="tab-settings">
+      <div class="panel-grid">
+        <div class="settings-card field-full">
+          <h3 class="settings-heading">🔐 Change Credentials</h3>
+          <div class="panel-grid">
+            <div class="field-group">
+              <label for="s-user">New Username</label>
+              <input type="text" id="s-user" autocomplete="off" placeholder="admin">
+            </div>
+            <div class="field-group">
+              <label for="s-pass-new">New Password</label>
+              <input type="password" id="s-pass-new" autocomplete="new-password" placeholder="Min 6 characters">
+            </div>
+            <div class="field-group">
+              <label for="s-pass-confirm">Confirm Password</label>
+              <input type="password" id="s-pass-confirm" autocomplete="new-password" placeholder="Repeat password">
+            </div>
+            <div class="field-group">
+              <label for="s-pass-current">Current Password (required)</label>
+              <input type="password" id="s-pass-current" autocomplete="current-password" placeholder="Current password">
+            </div>
+          </div>
+          <button class="btn btn-primary" id="save-creds-btn" style="margin-top:1rem">Update Credentials</button>
+          <div class="settings-msg" id="settings-msg"></div>
+        </div>
+
+        <div class="settings-card field-full">
+          <h3 class="settings-heading">📥 Export / Reset Data</h3>
+          <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem">Download your current portfolio data as JSON, or reset everything to the defaults.</p>
+          <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+            <button class="btn btn-secondary" id="export-btn">⬇ Export portfolio-data.json</button>
+            <button class="btn btn-danger" id="factory-reset-btn">⚠ Factory Reset All Data</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Toast -->
+<div class="admin-toast" id="admin-toast"></div>
+
+<script src="admin.js?v=2"></script>
+</body>
+</html>

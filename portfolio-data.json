@@ -1,0 +1,133 @@
+{
+  "meta": {
+    "title": "0xKey | CTF Player | Cybersecurity Student",
+    "description": "Personal portfolio of 0xKey — a cybersecurity student specializing in reverse engineering, digital forensics, and web exploitation."
+  },
+  "hero": {
+    "handle": "0xKey",
+    "tagline": "Cybersecurity Student \u2022 CTF Player \u2022 RE & Forensics",
+    "profileImage": "./img/0xkey.png",
+    "githubUrl": "https://github.com/KoussaiCs00110",
+    "badges": [
+      { "icon": "\ud83d\udee1\ufe0f", "text": "Cybersecurity Student" },
+      { "icon": "\ud83c\udfaf", "text": "CTF Player" },
+      { "icon": "\ud83e\udde0", "text": "Reverse Engineering & Digital Forensics" },
+      { "icon": "\ud83c\udfa5", "text": "Tech Content Creator" },
+      { "icon": "\u265f\ufe0f", "text": "Chess Player" }
+    ]
+  },
+  "about": {
+    "bio": [
+      "I'm a passionate cybersecurity student diving deep into the world of digital security. My journey started with curiosity about how systems work under the hood, which led me to explore reverse engineering, malware analysis, and digital forensics.",
+      "Through competing in CTF challenges and hands-on practice, I've developed skills in binary exploitation, web security, and forensic investigation. I love the thrill of breaking down complex systems and understanding their inner workings.",
+      "When I'm not breaking things (ethically!), you'll find me creating tech content, playing chess, or diving into the latest security research papers."
+    ],
+    "stats": [
+      { "value": "50+", "label": "CTFs Played" },
+      { "value": "4", "label": "Projects" },
+      { "value": "6", "label": "Months Learning" }
+    ]
+  },
+  "skills": {
+    "bars": [
+      { "name": "Digital Forensics", "percent": 70 },
+      { "name": "Reverse Engineering", "percent": 65 },
+      { "name": "Web Exploitation", "percent": 55 },
+      { "name": "Malware Analysis", "percent": 50 },
+      { "name": "Binary Exploitation", "percent": 45 },
+      { "name": "OSINT", "percent": 60 }
+    ],
+    "tools": ["Ghidra", "IDA Pro", "Wireshark", "Burp Suite", "Volatility", "x64dbg", "Autopsy", "Linux", "Python", "GDB"]
+  },
+  "projects": [
+    {
+      "icon": "🏆",
+      "title": "CTF Writeups Repository",
+      "description": "A collection of detailed writeups from various CTF competitions covering RE, forensics, and web challenges.",
+      "tags": ["Python", "Forensics", "RE"],
+      "github": "https://github.com/KoussaiCs00110",
+      "live": "",
+      "imageUrl": ""
+    },
+    {
+      "icon": "🦠",
+      "title": "Malware Analysis Lab",
+      "description": "Personal sandbox environment for safe malware analysis and reverse engineering of suspicious binaries.",
+      "tags": ["IDA Pro", "x64dbg", "Windows"],
+      "github": "https://github.com/KoussaiCs00110",
+      "live": "",
+      "imageUrl": ""
+    },
+    {
+      "icon": "🔍",
+      "title": "Network Traffic Analyzer",
+      "description": "Custom Python tool for automated detection of suspicious network patterns and anomaly reporting.",
+      "tags": ["Python", "Wireshark", "PCAP"],
+      "github": "https://github.com/KoussaiCs00110",
+      "live": "",
+      "imageUrl": ""
+    },
+    {
+      "icon": "💾",
+      "title": "Digital Forensics Toolkit",
+      "description": "Automated forensic evidence collection and analysis toolkit built for CTF challenges.",
+      "tags": ["Python", "Volatility", "Autopsy"],
+      "github": "https://github.com/KoussaiCs00110",
+      "live": "",
+      "imageUrl": ""
+    },
+    {
+      "icon": "🛡️",
+      "title": "Adhahi Checker",
+      "description": "A Python script designed to check for service availability. Uses GitHub Actions for automation.",
+      "tags": ["Python", "Automation", "CI/CD"],
+      "github": "https://github.com/KoussaiCs00110/adhahi_checker",
+      "imageUrl": ""
+    }
+  ],
+  "achievements": [
+    {
+      "title": "Top 1% on TryHackMe",
+      "date": "May 2026",
+      "description": "Ranked in the top 1% globally on the THM platform.",
+      "url": "https://tryhackme.com/"
+    }
+  ],
+  "certificates": [
+    {
+      "title": "eJPT - Junior Penetration Tester",
+      "issuer": "eLearnSecurity",
+      "date": "Jan 2026",
+      "imageUrl": "",
+      "verifyUrl": "https://credentials.elearnsecurity.com/"
+    }
+  ],
+  "links": [
+    {
+      "platform": "LinkedIn",
+      "iconType": "linkedin",
+      "url": "https://www.linkedin.com/in/saad-eddine-koussai-belouadah-b2726438b/",
+      "description": "Professional network and career updates"
+    },
+    {
+      "platform": "GitHub",
+      "iconType": "github",
+      "url": "https://github.com/KoussaiCs00110",
+      "description": "Open source projects and CTF writeups"
+    },
+    {
+      "platform": "Telegram",
+      "iconType": "telegram",
+      "url": "https://t.me/sekb07",
+      "description": "Quick messages and discussions"
+    }
+  ],
+  "contact": {
+    "email": "saadedinnekoussai@gmail.com",
+    "telegramUrl": "https://t.me/sekb07",
+    "description": "Whether you have a question, want to collaborate, or just want to say hi, feel free to reach out!"
+  },
+  "footer": {
+    "text": "\u00a9 2026 0xKey. Built with passion for cybersecurity."
+  }
+}
