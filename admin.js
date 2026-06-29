@@ -7,8 +7,8 @@
 
 const STORAGE_KEY   = 'oxkey_portfolio_data';
 const CREDS_KEY     = 'oxkey_admin_creds_v2';
-const DEFAULT_USER  = '0xKeyAdmin';
-const DEFAULT_HASH  = 'e66d6ee9eec41bb7a3345da0cd326e53c9a89a23091bfc36d2a77aba06c13824';
+const DEFAULT_USER  = typeof window.ADMIN_USER !== 'undefined' ? window.ADMIN_USER : '0xKeyAdmin';
+const DEFAULT_HASH  = typeof window.ADMIN_HASH !== 'undefined' ? window.ADMIN_HASH : 'e66d6ee9eec41bb7a3345da0cd326e53c9a89a23091bfc36d2a77aba06c13824';
 
 /* ─── CRYPTO ──────────────────────────────────── */
 async function sha256(str) {
@@ -31,7 +31,7 @@ async function getStoredCreds() {
 /* ─── DEFAULT DATA ────────────────────────────── */
 async function fetchDefaultData() {
   try {
-    const res = await fetch('./portfolio-data.json');
+    const res = await fetch('/portfolio-data.json');
     if (res.ok) return await res.json();
   } catch (_) {}
   return null;
@@ -110,7 +110,13 @@ async function initLogin() {
     errEl.textContent = '';
 
     const inputHash = await sha256(passVal);
-    if (user === creds.username && inputHash === creds.passwordHash) {
+    const isLocalMatch = (user === creds.username && inputHash === creds.passwordHash);
+    const isConfigMatch = (user === DEFAULT_USER && inputHash === DEFAULT_HASH);
+
+    if (isLocalMatch || isConfigMatch) {
+      if (isConfigMatch && !isLocalMatch) {
+        localStorage.setItem(CREDS_KEY, JSON.stringify({ username: DEFAULT_USER, passwordHash: DEFAULT_HASH }));
+      }
       sessionStorage.setItem('oxkey_auth', '1');
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('dashboard').style.display = 'grid';
@@ -160,10 +166,11 @@ function populateForms(data) {
   set('ct-desc',     data.contact?.description || '');
   set('ft-text',     data.footer?.text || '');
 
-  // PROJECTS, ACHIEVEMENTS, CERTIFICATES
+  // PROJECTS, ACHIEVEMENTS, CERTIFICATES, ARTICLES
   renderProjectsEditor(data.projects || []);
   renderAchievementsEditor(data.achievements || []);
   renderCertificatesEditor(data.certificates || []);
+  renderArticlesEditor(data.articles || []);
 }
 
 function set(id, val) {
@@ -394,6 +401,76 @@ function collectCertificates() {
   }));
 }
 
+/* ─── ARTICLES EDITOR ─────────────────────────── */
+let articlesData = [];
+function renderArticlesEditor(articles) {
+  articlesData = JSON.parse(JSON.stringify(articles));
+  const el = document.getElementById('articles-editor');
+  if (!el) return;
+  el.innerHTML = '';
+  articlesData.forEach((a, i) => el.appendChild(buildArticleCard(a, i)));
+}
+function buildArticleCard(a, i) {
+  const div = document.createElement('div');
+  div.className = 'project-editor-card';
+  div.innerHTML = `
+    <div class="project-editor-header">
+      <span class="project-editor-num">Article #${i + 1}</span>
+      <button class="btn btn-danger remove-article-btn" data-index="${i}">✕ Remove</button>
+    </div>
+    <div class="panel-grid">
+      <div class="field-group">
+        <label>Title</label>
+        <input type="text" class="art-title" value="${esc(a.title || '')}" placeholder="My CTF Writeup">
+      </div>
+      <div class="field-group">
+        <label>Category</label>
+        <input type="text" class="art-category" value="${esc(a.category || '')}" placeholder="Writeup, Article, Tutorial...">
+      </div>
+      <div class="field-group">
+        <label>Date</label>
+        <input type="text" class="art-date" value="${esc(a.date || '')}" placeholder="June 2026">
+      </div>
+      <div class="field-group">
+        <label>Tags (comma-separated)</label>
+        <input type="text" class="art-tags" value="${esc((a.tags || []).join(', '))}" placeholder="Forensics, CTF, Writeup">
+      </div>
+      <div class="field-group field-full">
+        <label>Cover Image URL (or upload)</label>
+        <div style="display:flex;gap:0.5rem">
+          <input type="url" class="art-cover" value="${esc(a.coverImage || '')}" placeholder="https://... or upload" style="flex:1">
+          <input type="file" class="art-cover-upload" accept="image/*" style="width:115px;padding:0.4rem;font-size:0.7rem">
+        </div>
+      </div>
+      <div class="field-group field-full">
+        <label>Excerpt (short summary shown on card)</label>
+        <textarea class="art-excerpt" rows="2" placeholder="A brief summary...">${esc(a.excerpt || '')}</textarea>
+      </div>
+      <div class="field-group field-full">
+        <label>Full Content (supports markdown — see help above)</label>
+        <textarea class="art-content" rows="10" placeholder="## Introduction\n\nWrite your article here...\n\nUse ![alt](url) to embed images.">${esc(a.content || '')}</textarea>
+      </div>
+    </div>`;
+  div.querySelector('.remove-article-btn').addEventListener('click', () => {
+    articlesData.splice(i, 1);
+    renderArticlesEditor(articlesData);
+  });
+  handleImageUpload(div.querySelector('.art-cover-upload'), div.querySelector('.art-cover'));
+  return div;
+}
+function collectArticles() {
+  const cards = document.querySelectorAll('#articles-editor .project-editor-card');
+  return Array.from(cards).map(card => ({
+    title:      card.querySelector('.art-title').value.trim(),
+    category:   card.querySelector('.art-category').value.trim(),
+    date:       card.querySelector('.art-date').value.trim(),
+    tags:       card.querySelector('.art-tags').value.split(',').map(t=>t.trim()).filter(Boolean),
+    coverImage: card.querySelector('.art-cover').value.trim(),
+    excerpt:    card.querySelector('.art-excerpt').value.trim(),
+    content:    card.querySelector('.art-content').value.trim()
+  }));
+}
+
 /* ─── COLLECT ALL DATA ────────────────────────── */
 function collectData(defaultData) {
   // Parse badges
@@ -445,6 +522,7 @@ function collectData(defaultData) {
     projects: collectProjects(),
     achievements: collectAchievements(),
     certificates: collectCertificates(),
+    articles: collectArticles(),
     links,
     contact: {
       email:       get('ct-email'),
@@ -457,7 +535,7 @@ function collectData(defaultData) {
 
 /* ─── TABS ────────────────────────────────────── */
 function initTabs() {
-  const TITLES = { hero:'Hero', about:'About', skills:'Skills', projects:'Projects', achievements:'Achievements', certificates:'Certificates', links:'Links', contact:'Contact', settings:'Settings' };
+  const TITLES = { hero:'Hero', about:'About', skills:'Skills', projects:'Projects', achievements:'Achievements', certificates:'Certificates', articles:'Articles', links:'Links', contact:'Contact', settings:'Settings' };
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -491,6 +569,10 @@ async function initDashboard() {
   document.getElementById('add-certificate-btn').addEventListener('click', () => {
     certificatesData.push({ title:'New Certificate', issuer:'', date:'', imageUrl:'', verifyUrl:'' });
     renderCertificatesEditor(certificatesData);
+  });
+  document.getElementById('add-article-btn').addEventListener('click', () => {
+    articlesData.push({ title:'New Article', category:'Writeup', date:'', tags:[], coverImage:'', excerpt:'', content:'' });
+    renderArticlesEditor(articlesData);
   });
 
   // Save btn

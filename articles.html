@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Articles & Writeups | 0xKey</title>
+  <meta name="description" content="CTF writeups, cybersecurity articles, and technical blog posts by 0xKey.">
+
+  <link rel="icon" href="./img/0xkey.png" type="image/png">
+  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700;800&family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+    rel="stylesheet">
+</head>
+
+<body>
+
+  <!-- Background Effects -->
+  <canvas id="particles-canvas"></canvas>
+  <div class="scanlines"></div>
+
+  <!-- Navigation -->
+  <nav class="navbar scrolled" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo">
+        <span class="logo-bracket">[</span>
+        <span class="logo-text">0xKey</span>
+        <span class="logo-bracket">]</span>
+      </a>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="index.html#about" class="nav-link">About</a></li>
+        <li><a href="index.html#skills" class="nav-link">Skills</a></li>
+        <li><a href="index.html#projects" class="nav-link">Projects</a></li>
+        <li><a href="articles.html" class="nav-link active">Articles</a></li>
+        <li><a href="index.html#certificates" class="nav-link">Certificates</a></li>
+        <li><a href="index.html#contact" class="nav-link">Contact</a></li>
+      </ul>
+      <div class="nav-right">
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">◐</button>
+        <button class="hamburger" id="hamburger" aria-label="Open menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Page Header -->
+  <section class="articles-hero" id="articles-top">
+    <div class="container">
+      <h1 class="articles-page-title">
+        <span class="title-num">~/</span>Articles & Writeups
+      </h1>
+      <p class="articles-page-desc">CTF writeups, research notes, and technical deep-dives.</p>
+
+      <!-- Filter bar -->
+      <div class="articles-filters" id="articles-filters"></div>
+    </div>
+  </section>
+
+  <!-- Articles List -->
+  <section class="section" style="padding-top: 2rem;">
+    <div class="container">
+      <div class="articles-list" id="articles-list">
+        <div class="articles-empty" id="articles-empty">
+          <span style="font-size:3rem;display:block;margin-bottom:1rem">📝</span>
+          <p>No articles yet. Check back soon!</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Article Modal (full view) -->
+  <div class="article-modal" id="article-modal">
+    <div class="article-modal-backdrop" id="modal-backdrop"></div>
+    <div class="article-modal-content" id="modal-content">
+      <button class="article-modal-close" id="modal-close" aria-label="Close article">&times;</button>
+      <div class="article-modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p id="footer-text">&copy; 2026 0xKey.</p>
+    </div>
+  </footer>
+
+  <script src="articles.js?v=1"></script>
+</body>
+
+</html>
