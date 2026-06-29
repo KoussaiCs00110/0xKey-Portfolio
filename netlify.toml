@@ -17,3 +17,20 @@
     Cache-Control = "no-cache, no-store, must-revalidate"
     Pragma = "no-cache"
     Expires = "0"
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/admin_config.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/admin.js"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/admin.css"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
