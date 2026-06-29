@@ -9,9 +9,10 @@ exports.handler = async (event, context) => {
     const validUser = process.env.ADMIN_USER;
     const validPass = process.env.ADMIN_PASS;
 
-    // Use default credentials if env vars are not set (for local dev if .env is not loaded correctly by netlify dev)
-    const expectedUser = validUser || '0xkey';
-    const expectedPass = validPass || '\\yRTktZqX/';
+    // For local dev, ensure you use `netlify dev` so it loads .env variables. 
+    // We remove the hardcoded fallbacks so Netlify's secret scanner doesn't complain.
+    const expectedUser = validUser;
+    const expectedPass = validPass;
 
     if (username === expectedUser && password === expectedPass) {
       return {
