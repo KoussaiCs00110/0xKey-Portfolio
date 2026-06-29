@@ -1,5 +1,5 @@
 [build]
-  command = "python3 build.py"
+  functions = "netlify/functions"
   publish = "."
 
 [[headers]]
@@ -19,11 +19,6 @@
     Expires = "0"
     X-Robots-Tag = "noindex, nofollow"
 
-[[headers]]
-  for = "/admin_config.js"
-  [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
-    X-Robots-Tag = "noindex, nofollow"
 
 [[headers]]
   for = "/admin.js"

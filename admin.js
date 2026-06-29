@@ -6,27 +6,6 @@
 // =================================================
 
 const STORAGE_KEY   = 'oxkey_portfolio_data';
-const CREDS_KEY     = 'oxkey_admin_creds_v2';
-const DEFAULT_USER  = typeof window.ADMIN_USER !== 'undefined' ? window.ADMIN_USER : '0xKeyAdmin';
-const DEFAULT_HASH  = typeof window.ADMIN_HASH !== 'undefined' ? window.ADMIN_HASH : 'e66d6ee9eec41bb7a3345da0cd326e53c9a89a23091bfc36d2a77aba06c13824';
-
-/* ─── CRYPTO ──────────────────────────────────── */
-async function sha256(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-/* ─── STORED CREDS ────────────────────────────── */
-async function getStoredCreds() {
-  const raw = localStorage.getItem(CREDS_KEY);
-  if (raw) {
-    try { return JSON.parse(raw); } catch (_) {}
-  }
-  // First run — initialize defaults
-  const creds = { username: DEFAULT_USER, passwordHash: DEFAULT_HASH };
-  localStorage.setItem(CREDS_KEY, JSON.stringify(creds));
-  return creds;
-}
 
 /* ─── DEFAULT DATA ────────────────────────────── */
 async function fetchDefaultData() {
@@ -104,25 +83,29 @@ async function initLogin() {
     e.preventDefault();
     const user    = document.getElementById('l-user').value.trim();
     const passVal = document.getElementById('l-pass').value;
-    const creds   = await getStoredCreds();
 
     btnText.textContent = 'Checking...';
     errEl.textContent = '';
 
-    const inputHash = await sha256(passVal);
-    const isLocalMatch = (user === creds.username && inputHash === creds.passwordHash);
-    const isConfigMatch = (user === DEFAULT_USER && inputHash === DEFAULT_HASH);
+    try {
+      const res = await fetch('/.netlify/functions/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user, password: passVal })
+      });
+      const data = await res.json();
 
-    if (isLocalMatch || isConfigMatch) {
-      if (isConfigMatch && !isLocalMatch) {
-        localStorage.setItem(CREDS_KEY, JSON.stringify({ username: DEFAULT_USER, passwordHash: DEFAULT_HASH }));
+      if (data.success) {
+        sessionStorage.setItem('oxkey_auth', '1');
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'grid';
+        await initDashboard();
+      } else {
+        errEl.textContent = '✗ Invalid username or password';
+        btnText.textContent = 'Access Panel';
       }
-      sessionStorage.setItem('oxkey_auth', '1');
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('dashboard').style.display = 'grid';
-      await initDashboard();
-    } else {
-      errEl.textContent = '✗ Invalid username or password';
+    } catch (err) {
+      errEl.textContent = '✗ Error connecting to auth server';
       btnText.textContent = 'Access Panel';
     }
   });
@@ -619,30 +602,7 @@ async function initDashboard() {
 
   // Change credentials
   document.getElementById('save-creds-btn').addEventListener('click', async () => {
-    const msgEl      = document.getElementById('settings-msg');
-    const newUser    = document.getElementById('s-user').value.trim();
-    const newPass    = document.getElementById('s-pass-new').value;
-    const confirm_   = document.getElementById('s-pass-confirm').value;
-    const currentPas = document.getElementById('s-pass-current').value;
-
-    msgEl.className = 'settings-msg';
-    msgEl.textContent = '';
-
-    if (!currentPas) { msgEl.textContent = '✗ Enter current password.'; msgEl.className='settings-msg err'; return; }
-    const creds       = await getStoredCreds();
-    const currentHash = await sha256(currentPas);
-    if (currentHash !== creds.passwordHash) { msgEl.textContent = '✗ Current password is incorrect.'; msgEl.className='settings-msg err'; return; }
-    if (!newUser)  { msgEl.textContent = '✗ Username cannot be empty.'; msgEl.className='settings-msg err'; return; }
-    if (newPass.length < 6) { msgEl.textContent = '✗ Password must be at least 6 characters.'; msgEl.className='settings-msg err'; return; }
-    if (newPass !== confirm_) { msgEl.textContent = '✗ Passwords do not match.'; msgEl.className='settings-msg err'; return; }
-
-    const newHash = await sha256(newPass);
-    localStorage.setItem(CREDS_KEY, JSON.stringify({ username: newUser, passwordHash: newHash }));
-    // Clear fields
-    ['s-user','s-pass-new','s-pass-confirm','s-pass-current'].forEach(id => { const e=document.getElementById(id); if(e)e.value=''; });
-    msgEl.textContent = '✓ Credentials updated! Use them on next login.';
-    msgEl.className = 'settings-msg ok';
-    toast('✓ Credentials updated successfully.', 'ok');
+    toast('⚠ Credentials must now be changed via Netlify Environment Variables.', 'warn');
   });
 }
 
@@ -650,13 +610,10 @@ async function initDashboard() {
 async function boot() {
   // If already authenticated in session, skip login
   if (sessionStorage.getItem('oxkey_auth') === '1') {
-    // Ensure creds exist
-    await getStoredCreds();
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('dashboard').style.display = 'grid';
     await initDashboard();
   } else {
-    await getStoredCreds(); // Initialize default creds on first visit
     initLogin();
   }
 }
