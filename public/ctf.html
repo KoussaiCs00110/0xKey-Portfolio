@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CTF Challenges | 0xKey</title>
+  <meta name="description"
+    content="Hands-on CTF-style security challenges by 0xKey — practice web exploitation, cryptography, reverse engineering, forensics, and binary exploitation.">
+
+  <!-- OpenGraph / Social Meta Tags -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="CTF Challenges | 0xKey">
+  <meta property="og:description"
+    content="A hands-on space where I practice and share CTF-style security challenges — web, crypto, reverse engineering, forensics, and pwn.">
+  <meta property="og:image" content="./assets/img/0xkey.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="CTF Challenges | 0xKey">
+  <meta name="twitter:description"
+    content="A hands-on space where I practice and share CTF-style security challenges.">
+  <meta name="twitter:image" content="./assets/img/0xkey.png">
+
+  <link rel="icon" href="./assets/img/0xkey.png" type="image/png">
+  <link rel="apple-touch-icon" href="./assets/img/0xkey.png">
+  <link rel="stylesheet" href="assets/css/style.css?v=2">
+  <link rel="stylesheet" href="assets/css/ctf.css?v=2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700;800&family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+    rel="stylesheet">
+</head>
+
+<body>
+
+  <!-- Background Effects -->
+  <canvas id="particles-canvas"></canvas>
+  <div class="scanlines"></div>
+  <div class="spotlight" id="spotlight"></div>
+
+  <!-- Navigation -->
+  <nav class="navbar scrolled" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo">
+        <span class="logo-bracket">[</span>
+        <span class="logo-text">0xKey</span>
+        <span class="logo-bracket">]</span>
+      </a>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="index.html#about" class="nav-link">About</a></li>
+        <li><a href="index.html#skills" class="nav-link">Skills</a></li>
+        <li><a href="index.html#projects" class="nav-link">Projects</a></li>
+        <li><a href="articles.html" class="nav-link">Articles</a></li>
+        <li><a href="ctf.html" class="nav-link active">CTF</a></li>
+        <li><a href="index.html#certificates" class="nav-link">Certificates</a></li>
+        <li><a href="index.html#contact" class="nav-link">Contact</a></li>
+      </ul>
+      <div class="nav-right">
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">◐</button>
+        <button class="hamburger" id="hamburger" aria-label="Open menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Page Header -->
+  <section class="articles-hero" id="ctf-top">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Home</a>
+        <span class="breadcrumb-sep">/</span>
+        <span class="breadcrumb-current">CTF</span>
+      </nav>
+      <h1 class="articles-page-title">
+        <span class="title-num">~/</span>CTF Challenges
+      </h1>
+      <p class="articles-page-desc">
+        A hands-on space where I practice and share CTF-style security challenges —
+        the same skills behind my work in reverse engineering, digital forensics,
+        and web exploitation. Pick a challenge, find the flag, submit it below.
+      </p>
+      <div class="ctf-intro-actions">
+        <a href="index.html#projects" class="btn btn-secondary">← Back to Portfolio</a>
+        <a href="#ctf-challenges" class="btn btn-primary">Start Hacking <span class="btn-arrow">→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Challenges -->
+  <section class="section" id="ctf-challenges" style="padding-top: 2rem;">
+    <div class="container">
+      <h2 class="section-title reveal"><span class="title-num">01.</span> Challenges</h2>
+      <div class="ctf-grid" id="ctf-grid"></div>
+      <div class="ctf-empty" id="ctf-empty" hidden>
+        <span class="ctf-empty-icon">⚠️</span>
+        <p>Could not load challenges. Check your connection and refresh the page.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- About this page -->
+  <section class="section" id="ctf-about" style="padding-top: 0;">
+    <div class="container">
+      <h2 class="section-title reveal"><span class="title-num">02.</span> About This Page</h2>
+      <div class="ctf-about-card reveal">
+        <p>
+          This page is a full-stack project: a static frontend with
+          <strong>zero flag logic in the browser</strong>, backed by serverless API
+          endpoints. Flags are stored server-side only as salted SHA-256 hashes
+          (unique random salt per challenge) and every submission is verified with
+          a timing-safe comparison.
+        </p>
+        <ul class="ctf-about-list">
+          <li><span>Submissions are rate-limited</span> to keep brute-forcing impractical.</li>
+          <li><span>Oversized or empty input</span> is rejected before any hashing happens.</li>
+          <li><span>Failure responses are generic</span> — a wrong flag and an unknown challenge look identical.</li>
+          <li><span>Writeups unlock only after</span> the server confirms a correct flag — never bundled in advance.</li>
+        </ul>
+        <p class="ctf-about-stack">
+          Stack: static HTML/CSS/JS frontend · Netlify Functions (Node.js) + Netlify Blobs backend ·
+          SHA-256 + per-challenge salts · challenges managed from the site admin panel (draft/publish,
+          file attachments, gated writeups) · fetch-based flag submission.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p id="footer-text">&copy; 2026 0xKey.</p>
+    </div>
+  </footer>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast"></div>
+
+  <script src="assets/js/ctf.js?v=2"></script>
+</body>
+
+</html>

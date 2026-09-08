@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Panel — 0xKey Portfolio</title>
   <meta name="robots" content="noindex, nofollow">
-  <link rel="icon" href="/img/0xkey.png" type="image/png">
-  <link rel="stylesheet" href="/admin.css?v=2">
+  <link rel="icon" href="/assets/img/0xkey.png" type="image/png">
+  <link rel="stylesheet" href="./css/admin.css?v=2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -81,6 +81,7 @@
       <button class="tab-btn" data-tab="achievements">🏆 Achievements</button>
       <button class="tab-btn" data-tab="certificates">📜 Certificates</button>
       <button class="tab-btn" data-tab="articles">📝 Articles</button>
+      <button class="tab-btn" data-tab="ctf">🚩 CTF</button>
       <button class="tab-btn" data-tab="links">🔗 Links</button>
       <button class="tab-btn" data-tab="contact">✉ Contact</button>
       <button class="tab-btn" data-tab="settings">⚙ Settings</button>
@@ -270,6 +271,111 @@
       <button class="btn btn-secondary" id="add-article-btn" style="margin-top:1rem">+ Add Article</button>
     </section>
 
+    <!-- ── TAB: CTF CHALLENGES ── -->
+    <section class="tab-panel" id="tab-ctf">
+      <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.25rem">
+        CTF challenges are stored <strong>server-side</strong> and go live immediately —
+        no export needed. Only <strong>published</strong>, non-deleted challenges appear on the public
+        <a href="/ctf.html" target="_blank" style="color:var(--primary)">/ctf</a> page.
+        Flags are hashed on save and never shown again.
+      </p>
+      <div class="ctf-toolbar">
+        <select id="ctf-filter-status" aria-label="Filter by status">
+          <option value="all">All statuses</option>
+          <option value="published">Published</option>
+          <option value="draft">Draft</option>
+          <option value="deleted">Deleted</option>
+        </select>
+        <select id="ctf-filter-category" aria-label="Filter by category">
+          <option value="all">All categories</option>
+        </select>
+        <button class="btn btn-secondary" id="ctf-refresh-btn">↻ Refresh</button>
+        <button class="btn btn-primary" id="ctf-new-btn">+ New Challenge</button>
+      </div>
+      <div id="ctf-admin-list"></div>
+
+      <!-- Editor modal -->
+      <div class="ctf-modal" id="ctf-modal" hidden>
+        <div class="ctf-modal-backdrop" data-ctf-close></div>
+        <div class="ctf-modal-content">
+          <h3 class="ctf-modal-title" id="ctf-modal-title">New Challenge</h3>
+          <form id="ctf-form" novalidate>
+            <div class="panel-grid">
+              <div class="field-group field-full">
+                <label for="ctf-f-title">Title</label>
+                <input type="text" id="ctf-f-title" maxlength="120" placeholder="Challenge title" required>
+              </div>
+              <div class="field-group">
+                <label for="ctf-f-category">Category</label>
+                <input type="text" id="ctf-f-category" maxlength="40" list="ctf-category-list" placeholder="Web, Crypto, Forensics…">
+                <datalist id="ctf-category-list"></datalist>
+              </div>
+              <div class="field-group">
+                <label for="ctf-f-difficulty">Difficulty</label>
+                <select id="ctf-f-difficulty">
+                  <option value="easy">Easy</option>
+                  <option value="medium">Medium</option>
+                  <option value="hard">Hard</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <label for="ctf-f-status">Status</label>
+                <select id="ctf-f-status">
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <label for="ctf-f-order">Display order</label>
+                <input type="number" id="ctf-f-order" value="0" step="1">
+              </div>
+              <div class="field-group field-full">
+                <label for="ctf-f-desc">Description (markdown supported)</label>
+                <textarea id="ctf-f-desc" rows="4" maxlength="5000" placeholder="What should the player do?"></textarea>
+              </div>
+              <div class="field-group field-full">
+                <label for="ctf-f-flag">Correct flag</label>
+                <input type="password" id="ctf-f-flag" maxlength="200" autocomplete="off"
+                  placeholder="flag{...}" style="font-family:var(--font-hd)">
+                <span class="field-hint" id="ctf-flag-hint">Hashed server-side on save. Never stored or shown again.</span>
+              </div>
+              <div class="field-group field-full">
+                <label for="ctf-f-writeup">Writeup (shown only after solving)</label>
+                <textarea id="ctf-f-writeup" rows="5" maxlength="10000" placeholder="How it works…"></textarea>
+              </div>
+              <div class="field-group field-full">
+                <label>Attachments</label>
+                <div id="ctf-existing-files"></div>
+                <input type="file" id="ctf-f-files" multiple
+                  accept=".png,.jpg,.jpeg,.gif,.webp,.svg,.txt,.md,.pdf,.zip,.pcap,.pcapng,.cap,.py,.c,.h,.js,.html,.sh,.java,.rs,.go">
+                <span class="field-hint">Max 5 files, 5MB each. Allowed: images, txt, md, pdf, zip, pcap, source files.</span>
+              </div>
+            </div>
+            <div class="ctf-modal-actions">
+              <button type="button" class="btn btn-danger" id="ctf-delete-btn" hidden>Delete</button>
+              <span style="flex:1"></span>
+              <button type="button" class="btn btn-secondary" id="ctf-preview-btn">Preview</button>
+              <button type="button" class="btn btn-secondary" data-ctf-close>Cancel</button>
+              <button type="submit" class="btn btn-primary" id="ctf-save-btn">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Preview modal -->
+      <div class="ctf-modal" id="ctf-preview-modal" hidden>
+        <div class="ctf-modal-backdrop" data-ctf-close></div>
+        <div class="ctf-modal-content">
+          <h3 class="ctf-modal-title">Visitor preview</h3>
+          <div id="ctf-preview-body"></div>
+          <div class="ctf-modal-actions">
+            <span style="flex:1"></span>
+            <button type="button" class="btn btn-secondary" data-ctf-close>Close</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ── TAB: SETTINGS ── -->
     <section class="tab-panel" id="tab-settings">
       <div class="panel-grid">
@@ -314,6 +420,6 @@
 <!-- Toast -->
 <div class="admin-toast" id="admin-toast"></div>
 
-<script src="/admin.js?v=2"></script>
+<script src="./js/admin.js?v=2"></script>
 </body>
 </html>

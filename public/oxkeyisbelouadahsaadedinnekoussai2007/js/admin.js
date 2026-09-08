@@ -10,7 +10,7 @@ const STORAGE_KEY   = 'oxkey_portfolio_data';
 /* ─── DEFAULT DATA ────────────────────────────── */
 async function fetchDefaultData() {
   try {
-    const res = await fetch('/portfolio-data.json');
+    const res = await fetch('/data/portfolio-data.json');
     if (res.ok) return await res.json();
   } catch (_) {}
   return null;
@@ -97,6 +97,8 @@ async function initLogin() {
 
       if (data.success) {
         sessionStorage.setItem('oxkey_auth', '1');
+        if (data.token) sessionStorage.setItem('oxkey_token', data.token);
+        else sessionStorage.removeItem('oxkey_token');
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('dashboard').style.display = 'grid';
         await initDashboard();
@@ -489,7 +491,7 @@ function collectData(defaultData) {
     hero: {
       handle:       get('h-handle'),
       tagline:      get('h-tagline'),
-      profileImage: defaultData?.hero?.profileImage || './img/0xkey.png',
+      profileImage: defaultData?.hero?.profileImage || './assets/img/0xkey.png',
       githubUrl:    get('h-github'),
       badges,
     },
@@ -518,7 +520,7 @@ function collectData(defaultData) {
 
 /* ─── TABS ────────────────────────────────────── */
 function initTabs() {
-  const TITLES = { hero:'Hero', about:'About', skills:'Skills', projects:'Projects', achievements:'Achievements', certificates:'Certificates', articles:'Articles', links:'Links', contact:'Contact', settings:'Settings' };
+  const TITLES = { hero:'Hero', about:'About', skills:'Skills', projects:'Projects', achievements:'Achievements', certificates:'Certificates', articles:'Articles', ctf:'CTF Challenges', links:'Links', contact:'Contact', settings:'Settings' };
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -576,6 +578,7 @@ async function initDashboard() {
   // Logout
   document.getElementById('logout-btn').addEventListener('click', () => {
     sessionStorage.removeItem('oxkey_auth');
+    sessionStorage.removeItem('oxkey_token');
     document.getElementById('dashboard').style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
   });
@@ -604,6 +607,421 @@ async function initDashboard() {
   document.getElementById('save-creds-btn').addEventListener('click', async () => {
     toast('⚠ Credentials must now be changed via Netlify Environment Variables.', 'warn');
   });
+
+  // CTF challenges (server-side, token-authed API)
+  initCtfAdmin();
+}
+
+/* ─── CTF CHALLENGES (server-side admin API) ──── */
+const CTF_API = '/api/admin/ctf/challenges';
+let ctfInitDone = false;
+let ctfList = [];
+let ctfEditingId = null;
+let ctfRemoveFiles = [];
+
+function ctfGetToken() {
+  return sessionStorage.getItem('oxkey_token') || '';
+}
+
+function ctfForceRelogin() {
+  sessionStorage.removeItem('oxkey_auth');
+  sessionStorage.removeItem('oxkey_token');
+  const dash = document.getElementById('dashboard');
+  const login = document.getElementById('login-screen');
+  if (dash) dash.style.display = 'none';
+  if (login) login.style.display = 'flex';
+  toast('✗ Session expired — please log in again.', 'error');
+}
+
+async function ctfApi(path, opts) {
+  const res = await fetch(path, Object.assign({}, opts || {}, {
+    headers: Object.assign(
+      { 'Content-Type': 'application/json' },
+      (opts && opts.headers) || {},
+      { 'Authorization': 'Bearer ' + ctfGetToken() }
+    )
+  }));
+  if (res.status === 401) {
+    ctfForceRelogin();
+    throw new Error('unauthorized');
+  }
+  let data = null;
+  try { data = await res.json(); } catch (_) {}
+  if (!res.ok) {
+    const msg = (data && (data.errors ? data.errors.join('; ') : data.error)) || ('HTTP ' + res.status);
+    throw new Error(msg);
+  }
+  return data;
+}
+
+function ctfStatusPill(c) {
+  if (c.deleted) return '<span class="ctf-pill ctf-pill-deleted">Deleted</span>';
+  return c.status === 'published'
+    ? '<span class="ctf-pill ctf-pill-published">Published</span>'
+    : '<span class="ctf-pill ctf-pill-draft">Draft</span>';
+}
+
+function ctfDiffPill(d) {
+  const safe = (d === 'medium' || d === 'hard') ? d : 'easy';
+  return `<span class="ctf-pill ctf-pill-${safe}">${esc(safe)}</span>`;
+}
+
+function initCtfAdmin() {
+  if (ctfInitDone) return;
+  if (!document.getElementById('tab-ctf')) return;
+  ctfInitDone = true;
+
+  document.getElementById('ctf-new-btn').addEventListener('click', () => openCtfEditor(null));
+  document.getElementById('ctf-refresh-btn').addEventListener('click', loadCtfList);
+  document.getElementById('ctf-filter-status').addEventListener('change', renderCtfTable);
+  document.getElementById('ctf-filter-category').addEventListener('change', renderCtfTable);
+  document.getElementById('ctf-form').addEventListener('submit', saveCtfChallenge);
+  document.getElementById('ctf-preview-btn').addEventListener('click', previewCtfChallenge);
+  document.getElementById('ctf-delete-btn').addEventListener('click', deleteCtfChallenge);
+  document.querySelectorAll('[data-ctf-close]').forEach(el =>
+    el.addEventListener('click', closeCtfModals));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeCtfModals();
+  });
+
+  loadCtfList();
+}
+
+async function loadCtfList() {
+  const wrap = document.getElementById('ctf-admin-list');
+  try {
+    ctfList = await ctfApi(CTF_API, { method: 'GET' });
+    if (!Array.isArray(ctfList)) ctfList = [];
+    renderCtfFilters();
+    renderCtfTable();
+  } catch (err) {
+    if (String(err.message) === 'unauthorized') return;
+    if (wrap) wrap.innerHTML = `<div class="ctf-table-wrap"><div class="ctf-empty-row">✗ Could not load challenges: ${esc(err.message)}</div></div>`;
+  }
+}
+
+function renderCtfFilters() {
+  const sel = document.getElementById('ctf-filter-category');
+  const cur = sel.value || 'all';
+  const cats = [...new Set(ctfList.map(c => c.category).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="all">All categories</option>' +
+    cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  sel.value = [...sel.options].some(o => o.value === cur) ? cur : 'all';
+  const dl = document.getElementById('ctf-category-list');
+  if (dl) dl.innerHTML = cats.map(c => `<option value="${esc(c)}">`).join('');
+}
+
+function renderCtfTable() {
+  const wrap = document.getElementById('ctf-admin-list');
+  if (!wrap) return;
+  const fStatus = document.getElementById('ctf-filter-status').value;
+  const fCat = document.getElementById('ctf-filter-category').value;
+  const rows = ctfList
+    .filter(c => {
+      if (fStatus === 'deleted') return c.deleted;
+      if (c.deleted) return false;
+      if (fStatus !== 'all' && c.status !== fStatus) return false;
+      if (fCat !== 'all' && c.category !== fCat) return false;
+      return true;
+    })
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+  if (rows.length === 0) {
+    wrap.innerHTML = '<div class="ctf-table-wrap"><div class="ctf-empty-row">No challenges match this filter.</div></div>';
+    return;
+  }
+
+  wrap.innerHTML = `<div class="ctf-table-wrap"><table class="ctf-table">
+    <thead><tr>
+      <th>#</th><th>Title</th><th>Category</th><th>Difficulty</th>
+      <th>Status</th><th>Flag</th><th>Updated</th><th>Actions</th>
+    </tr></thead>
+    <tbody>${rows.map(c => `
+      <tr class="${c.deleted ? 'is-deleted' : ''}">
+        <td>${esc(String(c.order ?? 0))}</td>
+        <td><strong>${esc(c.title)}</strong><br><span style="opacity:.6;font-size:.75rem">${esc(c.id)}</span></td>
+        <td><span class="ctf-pill ctf-pill-cat">${esc(c.category || '')}</span></td>
+        <td>${ctfDiffPill(c.difficulty)}</td>
+        <td>${ctfStatusPill(c)}</td>
+        <td>${c.hasFlag ? '✓ set' : '✗ missing'}</td>
+        <td style="white-space:nowrap">${esc((c.updatedAt || '').slice(0, 10))}</td>
+        <td><div class="ctf-row-actions">
+          <button class="ctf-mini-btn" data-act="edit" data-id="${esc(c.id)}">Edit</button>
+          <button class="ctf-mini-btn" data-act="up" data-id="${esc(c.id)}" title="Move up">↑</button>
+          <button class="ctf-mini-btn" data-act="down" data-id="${esc(c.id)}" title="Move down">↓</button>
+          <button class="ctf-mini-btn" data-act="preview" data-id="${esc(c.id)}">Preview</button>
+          ${c.deleted
+            ? `<button class="ctf-mini-btn" data-act="restore" data-id="${esc(c.id)}">Restore</button>`
+            : `<button class="ctf-mini-btn danger" data-act="del" data-id="${esc(c.id)}">Delete</button>`}
+        </div></td>
+      </tr>`).join('')}
+    </tbody></table></div>`;
+
+  wrap.querySelectorAll('.ctf-mini-btn').forEach(btn => {
+    btn.addEventListener('click', () => ctfRowAction(btn.dataset.act, btn.dataset.id));
+  });
+}
+
+async function ctfRowAction(act, id) {
+  const item = ctfList.find(c => c.id === id);
+  if (!item && act !== 'edit') return;
+  try {
+    if (act === 'edit') openCtfEditor(id);
+    else if (act === 'preview') openCtfPreview(id);
+    else if (act === 'del') {
+      const target = ctfList.find(c => c.id === id);
+      if (!target) return;
+      if (!confirm(`Soft-delete "${target.title}"? It will disappear from the public page but stay restorable.`)) return;
+      await ctfApi(`${CTF_API}/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      toast('✓ Challenge moved to Deleted.', 'ok');
+      await loadCtfList();
+    } else if (act === 'restore') {
+      await ctfPutFull(item, { deleted: false });
+      toast('✓ Challenge restored.', 'ok');
+      await loadCtfList();
+    } else if (act === 'up' || act === 'down') {
+      await ctfMove(item, act === 'up' ? -1 : 1);
+    }
+  } catch (err) {
+    if (String(err.message) === 'unauthorized') return;
+    toast('✗ ' + err.message, 'error');
+  }
+}
+
+function ctfPutBody(item, overrides) {
+  return Object.assign({
+    title: item.title,
+    description: item.description,
+    category: item.category,
+    difficulty: item.difficulty,
+    status: item.status,
+    order: item.order || 0,
+    writeup: item.writeup || '',
+    deleted: Boolean(item.deleted)
+  }, overrides || {});
+}
+
+async function ctfPutFull(item, overrides) {
+  return ctfApi(`${CTF_API}/${encodeURIComponent(item.id)}`, {
+    method: 'PUT',
+    body: JSON.stringify(ctfPutBody(item, overrides))
+  });
+}
+
+async function ctfMove(item, dir) {
+  const visible = ctfList.filter(c => !c.deleted).sort((a, b) => (a.order || 0) - (b.order || 0));
+  const ix = visible.findIndex(c => c.id === item.id);
+  const jx = ix + dir;
+  if (ix === -1 || jx < 0 || jx >= visible.length) return;
+  const other = visible[jx];
+  const aOrder = item.order || 0;
+  const bOrder = other.order || 0;
+  // Swap display positions (fall back to index swap on ties).
+  const newA = bOrder === aOrder ? jx : bOrder;
+  const newB = bOrder === aOrder ? ix : aOrder;
+  await ctfPutFull(item, { order: newA });
+  const freshOther = (await ctfApi(CTF_API, { method: 'GET' })).find(c => c.id === other.id) || other;
+  await ctfApi(`${CTF_API}/${encodeURIComponent(other.id)}`, {
+    method: 'PUT',
+    body: JSON.stringify(ctfPutBody(freshOther, { order: newB }))
+  });
+  toast('✓ Order updated.', 'ok');
+  await loadCtfList();
+}
+
+/* ─── CTF editor modal ─── */
+function ctfSet(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.value = val == null ? '' : val;
+}
+
+function openCtfEditor(id) {
+  ctfEditingId = id || null;
+  ctfRemoveFiles = [];
+  const item = id ? ctfList.find(c => c.id === id) : null;
+  document.getElementById('ctf-modal-title').textContent = item ? `Edit: ${item.title}` : 'New Challenge';
+  ctfSet('ctf-f-title', item ? item.title : '');
+  ctfSet('ctf-f-category', item ? item.category : '');
+  ctfSet('ctf-f-difficulty', item ? item.difficulty : 'easy');
+  ctfSet('ctf-f-status', item ? item.status : 'draft');
+  ctfSet('ctf-f-order', item ? (item.order || 0) : (ctfList.reduce((m, c) => Math.max(m, c.order || 0), 0) + 1));
+  ctfSet('ctf-f-desc', item ? item.description : '');
+  ctfSet('ctf-f-flag', '');
+  ctfSet('ctf-f-writeup', item ? (item.writeup || '') : '');
+  document.getElementById('ctf-f-files').value = '';
+  const hint = document.getElementById('ctf-flag-hint');
+  hint.textContent = item
+    ? (item.hasFlag ? 'Flag is set. Leave blank to keep it, or type a new one to replace it.' : 'No flag set yet — one is required.')
+    : 'Hashed server-side on save. Never stored or shown again.';
+  const delBtn = document.getElementById('ctf-delete-btn');
+  delBtn.hidden = !item || item.deleted;
+  renderCtfExistingFiles(item ? (item.attachments || []) : []);
+  document.getElementById('ctf-preview-modal').hidden = true;
+  document.getElementById('ctf-modal').hidden = false;
+}
+
+function renderCtfExistingFiles(files) {
+  const wrap = document.getElementById('ctf-existing-files');
+  const visible = files.filter(f => !ctfRemoveFiles.includes(f.name));
+  wrap.innerHTML = visible.length === 0
+    ? '<div class="field-hint">No attachments.</div>'
+    : visible.map(f => `
+      <div class="ctf-file-row">
+        <span>📎 ${esc(f.name)}</span>
+        <span class="ctf-file-size">${esc(ctfFmtSize(f.size))}</span>
+        <button type="button" class="ctf-file-remove" data-file="${esc(f.name)}" title="Remove">✕</button>
+      </div>`).join('');
+  wrap.querySelectorAll('.ctf-file-remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      ctfRemoveFiles.push(btn.dataset.file);
+      const item = ctfEditingId ? ctfList.find(c => c.id === ctfEditingId) : null;
+      renderCtfExistingFiles(item ? (item.attachments || []) : []);
+    });
+  });
+}
+
+function ctfFmtSize(n) {
+  n = Number(n) || 0;
+  if (n < 1024) return n + ' B';
+  if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+  return (n / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+function closeCtfModals() {
+  document.getElementById('ctf-modal').hidden = true;
+  document.getElementById('ctf-preview-modal').hidden = true;
+}
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const parts = String(reader.result).split(',');
+      if (parts.length !== 2) return reject(new Error('unreadable file: ' + file.name));
+      resolve({ name: file.name, data: parts[1] });
+    };
+    reader.onerror = () => reject(new Error('unreadable file: ' + file.name));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function saveCtfChallenge(e) {
+  e.preventDefault();
+  const saveBtn = document.getElementById('ctf-save-btn');
+  saveBtn.disabled = true;
+  try {
+    const title = document.getElementById('ctf-f-title').value.trim();
+    const category = document.getElementById('ctf-f-category').value.trim();
+    const description = document.getElementById('ctf-f-desc').value.trim();
+    const flag = document.getElementById('ctf-f-flag').value;
+    if (!title || !category || !description) {
+      toast('✗ Title, category, and description are required.', 'error');
+      return;
+    }
+    if (!ctfEditingId && !flag.trim()) {
+      toast('✗ A correct flag is required for new challenges.', 'error');
+      return;
+    }
+    const picked = Array.from(document.getElementById('ctf-f-files').files || []);
+    for (const f of picked) {
+      if (f.size > 5 * 1024 * 1024) {
+        toast(`✗ File too large (max 5MB): ${f.name}`, 'error');
+        return;
+      }
+    }
+    const addFiles = [];
+    for (const f of picked) addFiles.push(await readFileAsBase64(f));
+
+    const body = {
+      title,
+      category,
+      difficulty: document.getElementById('ctf-f-difficulty').value,
+      status: document.getElementById('ctf-f-status').value,
+      order: parseInt(document.getElementById('ctf-f-order').value, 10) || 0,
+      description,
+      writeup: document.getElementById('ctf-f-writeup').value,
+      removeFiles: ctfRemoveFiles,
+      addFiles
+    };
+    if (flag.trim()) body.flag = flag;
+
+    if (ctfEditingId) {
+      await ctfApi(`${CTF_API}/${encodeURIComponent(ctfEditingId)}`, { method: 'PUT', body: JSON.stringify(body) });
+      toast('✓ Challenge updated.', 'ok');
+    } else {
+      await ctfApi(CTF_API, { method: 'POST', body: JSON.stringify(body) });
+      toast('✓ Challenge created.', 'ok');
+    }
+    // The plaintext flag never stays in the DOM longer than needed.
+    document.getElementById('ctf-f-flag').value = '';
+    closeCtfModals();
+    await loadCtfList();
+  } catch (err) {
+    if (String(err.message) === 'unauthorized') return;
+    toast('✗ ' + err.message, 'error');
+  } finally {
+    saveBtn.disabled = false;
+  }
+}
+
+async function deleteCtfChallenge() {
+  if (!ctfEditingId) return;
+  const item = ctfList.find(c => c.id === ctfEditingId);
+  if (!item) return;
+  if (!confirm(`Soft-delete "${item.title}"? It will disappear from the public page but stay restorable.`)) return;
+  try {
+    await ctfApi(`${CTF_API}/${encodeURIComponent(ctfEditingId)}`, { method: 'DELETE' });
+    toast('✓ Challenge moved to Deleted.', 'ok');
+    closeCtfModals();
+    await loadCtfList();
+  } catch (err) {
+    if (String(err.message) === 'unauthorized') return;
+    toast('✗ ' + err.message, 'error');
+  }
+}
+
+function openCtfPreview(id) {
+  const item = ctfList.find(c => c.id === id);
+  if (!item) return;
+  const body = document.getElementById('ctf-preview-body');
+  const files = (item.attachments || []).map(f =>
+    `<div class="ctf-file-row"><span>📎 ${esc(f.name)}</span><span class="ctf-file-size">${esc(ctfFmtSize(f.size))}</span></div>`
+  ).join('');
+  body.innerHTML = `
+    <div class="ctf-preview-card">
+      <h4>${esc(item.title)}</h4>
+      <div style="margin-bottom:.75rem">${ctfDiffPill(item.difficulty)} <span class="ctf-pill ctf-pill-cat">${esc(item.category || '')}</span> ${ctfStatusPill(item)}</div>
+      <p>${esc(item.description)}</p>
+      ${files || '<div class="field-hint">No attachments.</div>'}
+      <div class="field-group" style="margin-top:1rem">
+        <label>Flag input (visitor view)</label>
+        <input type="text" placeholder="flag{...}" disabled>
+      </div>
+    </div>
+    <p class="ctf-preview-note">Visitors ${item.status === 'published' && !item.deleted ? 'CAN' : 'CANNOT'} see this challenge (status: ${esc(item.status)}${item.deleted ? ', deleted' : ''}). Flag and salt are never exposed.</p>`;
+  document.getElementById('ctf-preview-modal').hidden = false;
+}
+
+function previewCtfChallenge() {
+  // Preview from the live form values without saving.
+  const existing = ctfEditingId ? ctfList.find(c => c.id === ctfEditingId) : null;
+  const tmp = {
+    title: document.getElementById('ctf-f-title').value || '(untitled)',
+    category: document.getElementById('ctf-f-category').value || 'misc',
+    difficulty: document.getElementById('ctf-f-difficulty').value,
+    description: document.getElementById('ctf-f-desc').value || '(no description yet)',
+    attachments: (existing && existing.attachments) || []
+  };
+  const body = document.getElementById('ctf-preview-body');
+  body.innerHTML = `
+    <div class="ctf-preview-card">
+      <h4>${esc(tmp.title)}</h4>
+      <div style="margin-bottom:.75rem">${ctfDiffPill(tmp.difficulty)} <span class="ctf-pill ctf-pill-cat">${esc(tmp.category)}</span></div>
+      <p>${esc(tmp.description)}</p>
+      <div class="field-hint">Attachments: ${tmp.attachments.length} existing${document.getElementById('ctf-f-files').files.length ? ` + ${document.getElementById('ctf-f-files').files.length} new` : ''}.</div>
+    </div>
+    <p class="ctf-preview-note">Unsaved preview — nothing is published until you press Save.</p>`;
+  document.getElementById('ctf-preview-modal').hidden = false;
 }
 
 /* ─── BOOT ────────────────────────────────────── */

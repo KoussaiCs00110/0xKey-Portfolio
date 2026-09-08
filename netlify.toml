@@ -1,6 +1,6 @@
 [build]
   functions = "netlify/functions"
-  publish = "."
+  publish = "public"
 
 [build.environment]
   SECRETS_SCAN_OMIT_KEYS = "ADMIN_USER"
@@ -13,9 +13,10 @@
     X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
 
 [[headers]]
-  for = "/oxkeyisbelouadahsaadedinnekoussai2007/adminpannel/*"
+  for = "/oxkeyisbelouadahsaadedinnekoussai2007/*"
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
     Pragma = "no-cache"
@@ -24,11 +25,50 @@
 
 
 [[headers]]
-  for = "/admin.js"
+  for = "/oxkeyisbelouadahsaadedinnekoussai2007/js/admin.js"
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"
 
+# Belt-and-braces: never serve anything under /netlify/ as static files.
+[[redirects]]
+  from = "/netlify/*"
+  to = "/"
+  status = 404
+  force = true
+
+# Canonical API routes (rewrites to serverless functions).
+# NOTE: the splat rule must stay above the exact collection rule.
+[[redirects]]
+  from = "/api/ctf/challenges"
+  to = "/.netlify/functions/ctf-challenges"
+  status = 200
+
+[[redirects]]
+  from = "/api/ctf/check"
+  to = "/.netlify/functions/ctf-check"
+  status = 200
+
+[[redirects]]
+  from = "/api/ctf/writeup"
+  to = "/.netlify/functions/ctf-writeup"
+  status = 200
+
+[[redirects]]
+  from = "/api/ctf/attachment"
+  to = "/.netlify/functions/ctf-attachment"
+  status = 200
+
+[[redirects]]
+  from = "/api/admin/ctf/challenges/*"
+  to = "/.netlify/functions/ctf-admin-challenge?id=:splat"
+  status = 200
+
+[[redirects]]
+  from = "/api/admin/ctf/challenges"
+  to = "/.netlify/functions/ctf-admin-challenges"
+  status = 200
+
 [[headers]]
-  for = "/admin.css"
+  for = "/oxkeyisbelouadahsaadedinnekoussai2007/css/admin.css"
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"

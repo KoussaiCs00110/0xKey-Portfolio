@@ -1,6 +1,3 @@
 User-agent: *
 Allow: /
 Disallow: /oxkeyisbelouadahsaadedinnekoussai2007/
-Disallow: /admin_config.js
-Disallow: /admin.js
-Disallow: /admin.css

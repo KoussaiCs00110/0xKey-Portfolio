@@ -1,260 +1,103 @@
-# Cybersecurity Student Portfolio Website
+# 0xKey Portfolio + CTF Challenges
 
-A modern, high-quality responsive personal website with a distinctive cyber-themed aesthetic featuring dark/light mode, particle effects, and smooth animations.
+Personal portfolio of 0xKey (cybersecurity student, CTF player) with an integrated,
+server-validated CTF challenge platform and a token-authenticated admin panel.
 
-## 🎨 Features
+Stack: vanilla HTML/CSS/JS (no framework) · Netlify Functions (Node.js) ·
+Netlify Blobs for challenge storage · Netlify Forms for the contact form.
 
-- **Dual Theme System**: Dark mode (Red + Black) and Light mode (Blue + White) with localStorage persistence
-- **Advanced Animations**: Particle system, glitch effects, progress bars, and scroll-triggered animations
-- **Interactive Terminal Widget**: Draggable mini terminal with typing animation
-- **Responsive Design**: Mobile-friendly layout that works on all devices
-- **Performance Optimized**: Respects `prefers-reduced-motion` and uses efficient animations
-- **Modern Tech Stack**: Pure HTML, CSS, and JavaScript (no frameworks required)
+## Project structure
 
-## 📁 Files Included
-
-- `index.html` - Main HTML structure
-- `style.css` - Complete styling with dark/light themes
-- `main.js` - All interactive functionality and animations
-- `logo.svg` - Your animated logo
-- `README.md` - This file
-
-## 🚀 Quick Start
-
-1. **Download all files** to a folder on your computer
-2. **Replace placeholder content** (see Customization section below)
-3. **Open `index.html`** in your web browser
-4. **Optional**: Host on GitHub Pages, Netlify, or Vercel for free
-
-## ✏️ Customization Guide
-
-### 1. Personal Information (in `index.html`)
-
-Search for "EDIT:" comments in the HTML file and replace:
-
-```html
-<!-- Line 59: Your Name -->
-<h1 class="hero-title glitch" data-text="YOUR_NAME">YOUR_NAME</h1>
-
-<!-- Line 97: GitHub URL -->
-<a href="https://github.com/YOUR_USERNAME" target="_blank">
-
-<!-- Line 125: Personal Bio -->
-<p>I'm a passionate cybersecurity student...</p>
-
-<!-- Line 225: LinkedIn URL -->
-<a href="https://linkedin.com/in/YOUR_LINKEDIN" target="_blank">
-
-<!-- Line 237: GitHub URL -->
-<a href="https://github.com/YOUR_GITHUB" target="_blank">
-
-<!-- Line 249: Telegram URL -->
-<a href="https://t.me/YOUR_TELEGRAM" target="_blank">
-
-<!-- Line 289: Telegram Button -->
-<a href="https://t.me/YOUR_TELEGRAM" target="_blank">
-
-<!-- Line 297: Email -->
-<a href="mailto:your.email@example.com" class="btn btn-secondary">
+```
+├── public/                        # Static site (netlify.toml publish dir)
+│   ├── index.html                 # Portfolio (home)
+│   ├── articles.html              # Articles & writeups
+│   ├── ctf.html                   # Public CTF challenge page
+│   ├── assets/
+│   │   ├── css/  (style.css, ctf.css)
+│   │   ├── js/   (main.js, articles.js, ctf.js)
+│   │   ├── img/  (profile, favicon, OG images)
+│   │   └── cert/ (certificate gallery)
+│   ├── data/
+│   │   └── portfolio-data.json    # All portfolio content (single source of truth)
+│   └── oxkeyisbelouadahsaadedinnekoussai2007/
+│       └── index.html             # Admin panel (obscure URL, noindex)
+│       ├── css/admin.css
+│       └── js/admin.js
+├── netlify/
+│   └── functions/                 # Serverless API (endpoint name = file name)
+│       ├── login.js               # Admin login → issues HMAC bearer token
+│       ├── ctf-check.js           # POST { challengeId, answer } → { correct }
+│       ├── ctf-challenges.js      # GET published challenges (no secrets)
+│       ├── ctf-writeup.js         # POST gated writeup (correct flag required)
+│       ├── ctf-attachment.js      # GET published challenge files
+│       ├── ctf-admin-challenges.js# Admin CRUD (collection)
+│       ├── ctf-admin-challenge.js # Admin CRUD (item, ?id=)
+│       ├── lib/                   # Shared modules (NOT endpoints)
+│       │   ├── store.js           # Blobs storage (+ local file fallback)
+│       │   ├── auth.js            # Token issue/verify (timing-safe)
+│       │   ├── validate.js        # Server-side input validation
+│       │   ├── http.js            # Response helpers, audit log, admin view
+│       │   └── seed.js            # Initial challenge migration data
+│       ├── package.json           # Function dependencies (@netlify/blobs)
+│       └── package-lock.json
+├── netlify.toml                   # Build, headers, /api/* rewrites
+├── robots.txt                     # Blocks the admin path from crawlers
+└── README.md
 ```
 
-### 2. Personal Photo
+### Why this layout
 
-Replace the placeholder image URL on line 53:
+- **`public/`** — everything served to browsers lives here and only here.
+  Sensitive data (flag salts/hashes, attachments) lives in Netlify Blobs or
+  the local-dev tmp fallback, never in `public/`.
+- **`public/data/`** — content separated from code; the admin panel edits the
+  same shape and exports it back to `portfolio-data.json`.
+- **Admin under an obscure, noindexed path** — defense in depth; real
+  protection is the HMAC bearer token required by every admin endpoint.
+- **`netlify/functions/lib/`** — shared code lives in a subdirectory because
+  Netlify only creates endpoints from top-level files (a file in a subfolder
+  must be named `index` or match the folder to become an endpoint), so `lib/`
+  modules can never accidentally become public routes. Handler files stay flat
+  so endpoint names (`ctf-check`, `login`, …) are unchanged.
+- **kebab-case files, `?v=N` cache-busting** — the conventions already used
+  across the codebase.
 
-```html
-<!-- Current placeholder -->
-<img src="https://via.placeholder.com/300x300/1a1a1f/ff2d2d?text=YOUR+PHOTO" alt="Profile Photo">
+## API routes (via `netlify.toml` rewrites)
 
-<!-- Replace with your photo -->
-<img src="your-photo.jpg" alt="Profile Photo">
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/ctf/challenges` | — | Published challenges (no salt/hash) |
+| POST | `/api/ctf/check` | — | `{ challengeId, answer }` → `{ correct }` |
+| POST | `/api/ctf/writeup` | — | Writeup, only with correct flag |
+| GET | `/api/ctf/attachment?id=&file=` | — | Published challenge files |
+| GET/POST | `/api/admin/ctf/challenges` | Bearer | Admin list / create |
+| GET/PUT/DELETE | `/api/admin/ctf/challenges/:id` | Bearer | Admin read / edit / soft-delete |
+
+## Security model (CTF)
+
+- Flags stored server-side only as `SHA256(salt + flag)` with a unique
+  32-byte salt per challenge; compared with `crypto.timingSafeEqual`.
+- Rate limit: 10 attempts per challenge per IP per minute (`429`).
+- Generic failure responses (unknown ID ≡ wrong flag); input capped at 200 chars.
+- Admin plaintext flags are hashed on save and never stored, logged, or returned.
+- `Strict-Transport-Security` + `X-Frame-Options: DENY` + `nosniff` on all responses.
+
+## Environment variables (Netlify dashboard, never in repo)
+
+| Var | Purpose |
+|-----|---------|
+| `ADMIN_USER` / `ADMIN_PASS` | Admin panel credentials |
+| `ADMIN_TOKEN_SECRET` | HMAC key for admin API tokens (falls back to `ADMIN_PASS`) |
+
+## Local development
+
+```bash
+# Frontend only: serve public/
+npx serve public
+# Full stack (functions + rewrites): uses netlify.toml as-is
+netlify dev
 ```
 
-**Recommendation**: Use a 300x300px square photo for best results.
-
-### 3. Skills & Stats (in `main.js`)
-
-At the top of `main.js`, edit the CONFIG object:
-
-```javascript
-const CONFIG = {
-    // Skills percentages (0-100)
-    skills: {
-        RE_PERCENT: 70,           // Reverse Engineering
-        FORENSICS_PERCENT: 65,    // Digital Forensics
-        WEB_PERCENT: 55           // Web Exploitation
-    },
-    
-    // Stats for the About section
-    stats: {
-        ctfs: 25,           // Number of CTFs played
-        projects: 15,       // Number of projects
-        monthsLearning: 18  // Months of learning
-    }
-};
-```
-
-### 4. Logo Customization
-
-The logo file (`logo.svg`) is already included. It will automatically:
-- Glow on hover
-- Rotate when clicked
-- Pulse with animation
-- Change color based on theme
-
-To use a different logo:
-1. Replace `logo.svg` with your own SVG file
-2. Or update the `<img src="logo.svg">` in `index.html` to point to your logo
-
-## 🎯 Key Sections
-
-1. **Hero Section**: Introduction with photo, name, and CTAs
-2. **About Section**: Personal bio and animated stats counters
-3. **Skills Section**: Progress bars showing expertise levels
-4. **Terminal Widget**: Interactive draggable terminal window
-5. **Links Section**: Social media cards (LinkedIn, GitHub, Telegram)
-6. **Contact Section**: Form with email integration
-
-## 🎨 Theme Colors
-
-### Dark Mode (Default)
-- Background: `#0b0b0f`
-- Accent: `#ff2d2d` (Red)
-- Text: `#ffffff`
-
-### Light Mode
-- Background: `#f7fbff`
-- Accent: `#2563eb` (Blue)
-- Text: `#1a1a2e`
-
-To change theme colors, edit CSS variables in `style.css`:
-
-```css
-:root {
-    --accent-primary: #ff2d2d;  /* Change this for dark mode accent */
-}
-
-[data-theme="light"] {
-    --accent-primary: #2563eb;  /* Change this for light mode accent */
-}
-```
-
-## 🔧 Advanced Customization
-
-### Modify Particle Count
-In `main.js`, find the ParticleSystem class:
-
-```javascript
-this.particleCount = 80;  // Increase/decrease for more/fewer particles
-```
-
-### Adjust Animation Speed
-In `style.css`, modify transition variables:
-
-```css
---transition-fast: 0.2s ease;
---transition-normal: 0.3s ease;
---transition-slow: 0.5s ease;
-```
-
-### Terminal Commands
-Edit terminal commands in `main.js`:
-
-```javascript
-terminalCommands: [
-    { text: 'your-command', delay: 1000 },
-    { text: 'output', delay: 2000, isOutput: true },
-    // Add more commands...
-]
-```
-
-## 📱 Mobile Responsiveness
-
-The website automatically adjusts for:
-- Desktop (1400px+)
-- Tablet (768px - 1024px)
-- Mobile (<768px)
-
-Navigation collapses on mobile. Terminal widget becomes full-width on small screens.
-
-## 🌐 Hosting Options
-
-### GitHub Pages (Free)
-1. Create a new repository
-2. Upload all files
-3. Go to Settings → Pages
-4. Select main branch → Save
-5. Your site will be live at `https://username.github.io/repo-name`
-
-### Netlify (Free)
-1. Sign up at netlify.com
-2. Drag and drop your folder
-3. Site deploys automatically
-
-### Vercel (Free)
-1. Sign up at vercel.com
-2. Import your GitHub repo or upload files
-3. Deploy with one click
-
-## 🛠️ Browser Support
-
-- Chrome/Edge (latest)
-- Firefox (latest)
-- Safari (latest)
-- Mobile browsers
-
-## 📝 Contact Form Setup
-
-The contact form currently uses `mailto:` as a fallback. To enable real form submissions:
-
-1. **EmailJS**: Free service for client-side email
-2. **Formspree**: Simple form backend
-3. **Custom Backend**: Node.js/Express, PHP, or serverless function
-
-Example with Formspree:
-```html
-<form action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
-```
-
-## 🎓 Typography
-
-The site uses two distinctive fonts:
-- **Orbitron**: Headers and display text (cyber aesthetic)
-- **JetBrains Mono**: Body text and code (developer-friendly)
-
-Both fonts load from Google Fonts - no additional setup needed.
-
-## ⚡ Performance Tips
-
-- Images are lazy-loaded automatically
-- Animations respect user's motion preferences
-- Particles system is optimized for 60fps
-- CSS transitions are hardware-accelerated
-
-## 🐛 Troubleshooting
-
-**Theme toggle not working?**
-- Check browser console for errors
-- Clear localStorage: `localStorage.clear()`
-
-**Animations not smooth?**
-- Reduce particle count in `main.js`
-- Check `prefers-reduced-motion` setting
-
-**Logo not appearing?**
-- Verify `logo.svg` is in the same folder
-- Check browser console for 404 errors
-
-## 📄 License
-
-Free to use for personal portfolios. Modify as needed!
-
-## 🤝 Credits
-
-Design inspired by cybersecurity and hacker aesthetics with a modern twist.
-
----
-
-**Need Help?** Check the comments in the code files - they explain what each section does!
-
-Enjoy your new portfolio! 🚀
+Without `netlify dev`, functions fall back to file storage under
+`$CTF_STORE_PATH` (or the OS tmp dir) so the API still runs for tests.

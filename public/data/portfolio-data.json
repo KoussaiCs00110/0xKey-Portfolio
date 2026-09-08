@@ -6,7 +6,7 @@
   "hero": {
     "handle": "0xKey",
     "tagline": "Cybersecurity Student • CTF Player • Blue Teamer",
-    "profileImage": "./img/0xkey.png",
+    "profileImage": "./assets/img/0xkey.png",
     "githubUrl": "https://github.com/KoussaiCs00110",
     "badges": [
       {
@@ -90,6 +90,21 @@
     ]
   },
   "projects": [
+    {
+      "icon": "🚩",
+      "title": "Security & CTF Challenges",
+      "description": "A hands-on space where I practice and share CTF-style security challenges across web exploitation, cryptography, reverse engineering, forensics, and binary exploitation. Flags are verified server-side with salted hashes and timing-safe comparison — try it live.",
+      "tags": [
+        "CTF",
+        "Node.js",
+        "Netlify Functions",
+        "SHA-256",
+        "rate limiting"
+      ],
+      "github": "",
+      "live": "ctf.html",
+      "imageUrl": ""
+    },
     {
       "icon": "🏆",
       "title": "Sentinel Shield | Anti-DoS Protection System",
@@ -202,42 +217,42 @@
       "title": "DualCamp 2025",
       "issuer": "SecAI club",
       "date": "30 November 2025",
-      "imageUrl": "./cert/dualcamp_2025.jpg",
+      "imageUrl": "./assets/cert/dualcamp_2025.jpg",
       "verifyUrl": ""
     },
     {
       "title": "1st place CICONIX",
       "issuer": "CIC club",
       "date": "15 February 2026",
-      "imageUrl": "./cert/1st_place_ciconix.jpg",
+      "imageUrl": "./assets/cert/1st_place_ciconix.jpg",
       "verifyUrl": ""
     },
     {
       "title": "IngeHack participant",
       "issuer": "ingeniums club",
       "date": "25/4/2026",
-      "imageUrl": "./cert/ingehack_participant.jpg",
+      "imageUrl": "./assets/cert/ingehack_participant.jpg",
       "verifyUrl": ""
     },
     {
       "title": "ApoorvCTF26",
       "issuer": "",
       "date": "8 March 2026",
-      "imageUrl": "./cert/apoorvctf26.jpg",
+      "imageUrl": "./assets/cert/apoorvctf26.jpg",
       "verifyUrl": ""
     },
     {
       "title": "BlueHensCTF2026",
       "issuer": "",
       "date": "19 April 2026",
-      "imageUrl": "./cert/bluehensctf2026.jpg",
+      "imageUrl": "./assets/cert/bluehensctf2026.jpg",
       "verifyUrl": ""
     },
     {
       "title": "NumidiansCTF v1.0",
       "issuer": "",
       "date": "20 Juin 2026",
-      "imageUrl": "./cert/numidiansCTF.jpg",
+      "imageUrl": "./assets/cert/numidiansCTF.jpg",
       "verifyUrl": ""
     }
   ],

@@ -12,7 +12,7 @@ async function loadData() {
   if (raw) { try { return JSON.parse(raw); } catch (_) {} }
   // Fallback to JSON file
   try {
-    const res = await fetch('./portfolio-data.json');
+    const res = await fetch('./data/portfolio-data.json');
     if (res.ok) return await res.json();
   } catch (_) {}
   return null;
@@ -30,16 +30,21 @@ function renderContent(text) {
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   // Italic: *text*
   html = html.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
+  // Extract fenced code blocks FIRST (placeholders), so inline-code,
+  // image, and link rules below can't mangle their contents.
+  const codeBlocks = [];
+  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
+    codeBlocks.push(`<pre class="art-pre"><code>${code.trim()}</code></pre>`);
+    return `\u0000CODEBLOCK${codeBlocks.length - 1}\u0000`;
+  });
   // Inline code: `code`
   html = html.replace(/`([^`]+)`/g, '<code class="art-code">$1</code>');
-  // Code blocks: ```lang\n...\n```
-  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
-    return `<pre class="art-pre"><code>${code.trim()}</code></pre>`;
-  });
   // Images: ![alt](url)
   html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="art-img" loading="lazy">');
   // Links: [text](url)
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="art-link">$1</a>');
+  // Restore code blocks
+  html = html.replace(/\u0000CODEBLOCK(\d+)\u0000/g, (_, i) => codeBlocks[Number(i)]);
   // Line breaks: double newline = paragraph
   html = html.split(/\n\n+/).map(p => {
     p = p.trim();
@@ -58,7 +63,7 @@ function renderFilters(articles) {
 
   let html = '<button class="filter-btn active" data-cat="all">All</button>';
   categories.forEach(cat => {
-    html += `<button class="filter-btn" data-cat="${cat}">${cat}</button>`;
+    html += `<button class="filter-btn" data-cat="${esc(cat)}">${esc(cat)}</button>`;
   });
   filtersEl.innerHTML = html;
 

@@ -1,0 +1,289 @@
+/* =============================================
+   0xKey Portfolio — ctf.css
+   CTF page, built on the portfolio design tokens
+   defined in style.css (:root / [data-theme]).
+   No new fonts or colors introduced.
+   ============================================= */
+
+/* === BREADCRUMB === */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--muted);
+  margin-bottom: 1.25rem;
+}
+.breadcrumb a {
+  color: var(--muted);
+  transition: color 0.25s;
+}
+.breadcrumb a:hover { color: var(--primary); }
+.breadcrumb-sep { opacity: 0.5; }
+.breadcrumb-current { color: var(--primary); }
+
+/* === INTRO ACTIONS === */
+.ctf-intro-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+/* === CHALLENGE GRID / CARDS (mirrors .project-card) === */
+.ctf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
+  gap: 1.5rem;
+}
+.ctf-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 1.6rem;
+  backdrop-filter: blur(12px);
+  transition: all 0.3s var(--ease);
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  position: relative;
+  overflow: hidden;
+}
+.ctf-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.35s var(--ease);
+}
+.ctf-card:hover {
+  border-color: rgba(16, 185, 129, 0.38);
+  box-shadow: var(--glow);
+  transform: translateY(-7px);
+}
+.ctf-card:hover::before { transform: scaleX(1); }
+.ctf-card.solved { border-color: rgba(16, 185, 129, 0.55); }
+
+.ctf-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+.ctf-card-title {
+  font-family: var(--font-hd);
+  font-size: 0.95rem;
+  color: var(--text);
+  font-weight: 700;
+}
+.ctf-card-meta {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+/* Badges mirror .project-tag / .article-cat */
+.ctf-badge {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  padding: 0.18rem 0.55rem;
+  border-radius: var(--r);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.ctf-badge-category {
+  color: var(--primary);
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid var(--border);
+}
+.ctf-badge-easy {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+.ctf-badge-medium {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+.ctf-badge-hard {
+  color: var(--secondary);
+  background: rgba(225, 29, 72, 0.12);
+  border: 1px solid rgba(225, 29, 72, 0.25);
+}
+.ctf-badge-solved {
+  color: #0a0a1a;
+  background: var(--primary);
+  border: 1px solid var(--primary);
+}
+.ctf-card-desc {
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.65;
+  flex: 1;
+}
+.ctf-card-desc strong { color: var(--text); }
+.ctf-md-code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  color: var(--primary);
+}
+.ctf-md-link { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
+.ctf-md-link:hover { color: var(--secondary); }
+
+/* === ATTACHMENTS === */
+.ctf-attachments { display: flex; flex-direction: column; gap: 0.4rem; }
+.ctf-file-link {
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  font-family: var(--font-mono); font-size: 0.78rem; color: var(--primary);
+  padding: 0.4rem 0.7rem; border: 1px solid var(--border); border-radius: var(--r);
+  transition: all 0.25s; align-self: flex-start; max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ctf-file-link:hover { background: rgba(16, 185, 129, 0.08); border-color: var(--primary); }
+.ctf-file-link .ctf-file-size { color: var(--muted); font-size: 0.7rem; }
+
+/* === FLAG FORM (mirrors .form-group inputs + .btn buttons) === */
+.ctf-form {
+  display: flex;
+  gap: 0.75rem;
+}
+.ctf-input {
+  flex: 1;
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 0.65rem 1rem;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  transition: all 0.25s;
+  outline: none;
+}
+[data-theme="light"] .ctf-input { background: rgba(0, 0, 0, 0.03); }
+.ctf-input::placeholder { color: var(--muted); opacity: 0.5; }
+.ctf-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  background: rgba(16, 185, 129, 0.03);
+}
+.ctf-input:disabled { opacity: 0.5; cursor: not-allowed; }
+.ctf-form .btn { flex-shrink: 0; }
+.ctf-form .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+/* === RESULT / WRITEUP === */
+.ctf-result {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 600;
+  min-height: 1.4em;
+}
+.ctf-result:empty { display: none; }
+.ctf-result-correct { color: var(--primary); }
+.ctf-result-wrong { color: #f87171; }
+.ctf-result-rate { color: #f59e0b; }
+.ctf-writeup {
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.7;
+  padding: 1rem 1.2rem;
+  background: rgba(16, 185, 129, 0.05);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--primary);
+  border-radius: var(--r);
+  display: none;
+}
+.ctf-writeup.visible { display: block; }
+.ctf-writeup strong {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--primary);
+  margin-bottom: 0.4rem;
+}
+
+/* === EMPTY / ERROR STATE === */
+.ctf-empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+.ctf-empty[hidden] { display: none; }
+.ctf-empty-icon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+/* === ABOUT CARD === */
+.ctf-about-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 2rem;
+  backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 800px;
+}
+.ctf-about-card p {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.8;
+}
+.ctf-about-card strong { color: var(--text); }
+.ctf-about-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-left: 0.25rem;
+}
+.ctf-about-list li {
+  position: relative;
+  padding-left: 1.5rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+.ctf-about-list li::before {
+  content: '▸';
+  position: absolute;
+  left: 0;
+  color: var(--primary);
+}
+.ctf-about-list li span { color: var(--text); font-weight: 600; }
+.ctf-about-stack {
+  font-family: var(--font-mono) !important;
+  font-size: 0.76rem !important;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+/* === RESPONSIVE (same breakpoints as style.css) === */
+@media (max-width: 680px) {
+  .ctf-form { flex-direction: column; }
+  .ctf-form .btn { width: 100%; justify-content: center; }
+  .ctf-card-header { flex-direction: column; align-items: flex-start; }
+  .ctf-card-meta { justify-content: flex-start; }
+  .ctf-about-card { padding: 1.4rem; }
+  .ctf-intro-actions { flex-direction: column; }
+  .ctf-intro-actions .btn { width: 100%; justify-content: center; }
+}

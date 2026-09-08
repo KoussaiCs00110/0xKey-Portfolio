@@ -16,7 +16,7 @@ async function loadData() {
   }
   // 2. Fetch the JSON file
   try {
-    const res = await fetch('./portfolio-data.json');
+    const res = await fetch('./data/portfolio-data.json');
     if (res.ok) return await res.json();
   } catch (_) {}
   return null;
@@ -97,8 +97,9 @@ function renderProjects(d) {
   el.innerHTML = d.projects.map(p => {
     const githubLink = p.github
       ? `<a href="${p.github}" target="_blank" rel="noopener" class="project-link">${ICONS.github} GitHub</a>` : '';
+    const liveIsExternal = p.live && /^https?:\/\//i.test(p.live);
     const liveLink = p.live
-      ? `<a href="${p.live}" target="_blank" rel="noopener" class="project-link">${ICONS.external} Live</a>` : '';
+      ? `<a href="${p.live}"${liveIsExternal ? ' target="_blank" rel="noopener"' : ''} class="project-link">${ICONS.external} ${liveIsExternal ? 'Live' : 'Open'}</a>` : '';
     return `<div class="project-card">
       ${p.imageUrl ? `<div class="project-img-wrap"><img src="${p.imageUrl}" alt="${p.title}" loading="lazy"></div>` : `<div class="project-icon">${p.icon}</div>`}
       <div class="project-title">${p.title}</div>
@@ -250,7 +251,7 @@ function initTheme() {
   if (stored === 'light') {
     document.documentElement.setAttribute('data-theme', 'light');
     if (heroImg && heroImg.src.includes('0xkey.png')) {
-      heroImg.src = './img/0xkey1.png';
+      heroImg.src = './assets/img/0xkey1.png';
     }
   }
 
@@ -262,7 +263,7 @@ function initTheme() {
     
     if (heroImg) {
       if (heroImg.src.includes('0xkey.png') || heroImg.src.includes('0xkey1.png')) {
-        heroImg.src = newTheme === 'light' ? './img/0xkey1.png' : './img/0xkey.png';
+        heroImg.src = newTheme === 'light' ? './assets/img/0xkey1.png' : './assets/img/0xkey.png';
       }
     }
   });
@@ -411,6 +412,21 @@ function initContactForm() {
   if (!form) return;
   form.addEventListener('submit', e => {
     e.preventDefault();
+    // The form uses `novalidate`, so enforce required fields here
+    // instead of sending empty submissions to Netlify.
+    const name = form.querySelector('[name="name"]');
+    const email = form.querySelector('[name="email"]');
+    const message = form.querySelector('[name="message"]');
+    if (!name?.value.trim() || !email?.value.trim() || !message?.value.trim()) {
+      showToast('Please fill in your name, email, and message.', true);
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) {
+      showToast('Please enter a valid email address.', true);
+      return;
+    }
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
     const formData = new FormData(form);
     fetch("/", {
       method: "POST",
@@ -423,6 +439,9 @@ function initContactForm() {
     })
     .catch((error) => {
       showToast('Failed to send message. Please try again.', true);
+    })
+    .finally(() => {
+      if (submitBtn) submitBtn.disabled = false;
     });
   });
 }
