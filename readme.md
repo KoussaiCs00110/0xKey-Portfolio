@@ -93,11 +93,19 @@ Netlify Blobs for challenge storage · Netlify Forms for the contact form.
 ## Local development
 
 ```bash
-# Frontend only: serve public/
-npx serve public
-# Full stack (functions + rewrites): uses netlify.toml as-is
-netlify dev
+npm install          # installs netlify-cli (dev) + function deps
+npm run dev          # serves public/ + functions at http://localhost:8888
 ```
 
-Without `netlify dev`, functions fall back to file storage under
-`$CTF_STORE_PATH` (or the OS tmp dir) so the API still runs for tests.
+Copy `.env` values from the table above into a local `.env` file
+(gitignored) so admin login works locally:
+
+```bash
+ADMIN_USER=admin
+ADMIN_PASS=<your-local-password>
+CTF_STORE_PATH=./.ctf-store
+```
+
+Local challenge data persists in `.ctf-store/` (gitignored). Without
+`netlify dev`, functions fall back to file storage under `$CTF_STORE_PATH`
+(or the OS tmp dir) so the API still runs for tests.

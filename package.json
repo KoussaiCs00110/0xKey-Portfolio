@@ -1,0 +1,13 @@
+{
+  "name": "0xkey-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "0xKey portfolio + admin-managed CTF challenges (Netlify)",
+  "scripts": {
+    "dev": "netlify dev",
+    "functions:install": "npm --prefix netlify/functions install"
+  },
+  "devDependencies": {
+    "netlify-cli": "^27.5.0"
+  }
+}
