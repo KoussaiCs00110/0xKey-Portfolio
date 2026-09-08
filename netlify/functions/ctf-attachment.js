@@ -1,6 +1,7 @@
 // Public, unauthenticated file serving for challenge attachments.
-// Only files belonging to published, non-deleted challenges are served.
-const { loadChallenges, getAttachment } = require("./lib/store");
+// By default only files of published, non-deleted challenges are served;
+// the attachmentsRequirePublished setting can relax the published check.
+const { ensureSettings, getAttachment } = require("./lib/store");
 const { jsonHeaders } = require("./lib/http");
 
 const ID_PATTERN = /^[a-zA-Z0-9-]{1,100}$/;
@@ -26,9 +27,13 @@ exports.handler = async (event) => {
     return { statusCode: 404, headers: jsonHeaders(), body: JSON.stringify({ error: "not found" }) };
   }
 
-  const list = await loadChallenges();
-  const challenge = list.find((x) => x.id === id);
-  if (!challenge || challenge.deleted || challenge.status !== "published") {
+  const { settings, challenges } = await ensureSettings();
+  if (settings.pageEnabled === false) {
+    return { statusCode: 404, headers: jsonHeaders(), body: JSON.stringify({ error: "not found" }) };
+  }
+  const challenge = challenges.find((x) => x.id === id);
+  const requirePublished = settings.attachmentsRequirePublished !== false;
+  if (!challenge || challenge.deleted || (requirePublished && challenge.status !== "published")) {
     return { statusCode: 404, headers: jsonHeaders(), body: JSON.stringify({ error: "not found" }) };
   }
 
@@ -50,7 +55,8 @@ exports.handler = async (event) => {
     headers: Object.assign(jsonHeaders(), {
       "Content-Type": contentType,
       "Content-Disposition": `${isInline(contentType) ? "inline" : "attachment"}; filename="${file.replace(/"/g, "")}"`,
-      "Cache-Control": "public, max-age=3600"
+      // no-store: unpublishing/deleting must cut access immediately.
+      "Cache-Control": "no-store"
     }),
     body: buffer.toString("base64"),
     isBase64Encoded: true

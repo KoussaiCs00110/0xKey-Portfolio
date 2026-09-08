@@ -1,28 +1,87 @@
 // =================================================
 // 0xKey Portfolio — ctf.js
 // Static frontend: no flag logic here. Every answer
-// is verified server-side via POST /.netlify/functions/ctf-check
+// is verified server-side via POST /api/ctf/check
 // Response is only { correct: boolean }.
 // =================================================
 
 const COOLDOWN_MS = 2000;
 const ID_PATTERN = /^[a-z0-9-]{1,100}$/i;
-const DIFFICULTIES = new Set(["easy", "medium", "hard"]);
 
-/* ─── CHALLENGE LIST ───────────────────────────── */
+/* ─── CHALLENGE LIST + PAGE CONFIG ─────────────── */
 async function loadChallenges() {
   const grid = document.getElementById("ctf-grid");
   const empty = document.getElementById("ctf-empty");
   try {
     const res = await fetch("/api/ctf/challenges");
+    if (res.status === 503) {
+      showDisabled();
+      return;
+    }
     if (!res.ok) throw new Error("bad status: " + res.status);
-    const challenges = await res.json();
-    if (!Array.isArray(challenges) || challenges.length === 0) throw new Error("empty list");
+    const data = await res.json();
+    const page = (data && data.page) || {};
+    const challenges = data && Array.isArray(data.challenges) ? data.challenges : [];
+    applyPageConfig(page);
+    if (challenges.length === 0) throw new Error("empty list");
     if (empty) empty.hidden = true;
-    renderChallenges(challenges.filter(isValidChallenge));
+    renderChallenges(challenges.filter(isValidChallenge), page);
   } catch (err) {
     if (grid) grid.innerHTML = "";
-    if (empty) empty.hidden = false;
+    if (empty) {
+      empty.hidden = false;
+      const p = empty.querySelector("p");
+      if (p) p.textContent = "Could not load challenges. Check your connection and refresh the page.";
+    }
+  }
+}
+
+function showDisabled() {
+  const grid = document.getElementById("ctf-grid");
+  const empty = document.getElementById("ctf-empty");
+  if (grid) grid.innerHTML = "";
+  if (empty) {
+    empty.hidden = false;
+    empty.innerHTML = '<span class="ctf-empty-icon">🚧</span><p>Challenges are currently unavailable. Check back soon.</p>';
+  }
+  const about = document.getElementById("ctf-about-section");
+  if (about) about.hidden = true;
+}
+
+function applyPageConfig(page) {
+  if (typeof document.title === "string" && page.title) {
+    document.title = `${page.title} | 0xKey`;
+  }
+  const titleEl = document.getElementById("ctf-page-title");
+  if (titleEl && typeof page.title === "string" && page.title) {
+    titleEl.textContent = "";
+    const num = document.createElement("span");
+    num.className = "title-num";
+    num.textContent = "~/";
+    titleEl.appendChild(num);
+    titleEl.appendChild(document.createTextNode(page.title));
+  }
+  const introEl = document.getElementById("ctf-page-intro");
+  if (introEl && typeof page.intro === "string" && page.intro) {
+    introEl.textContent = page.intro;
+  }
+  const aboutSection = document.getElementById("ctf-about-section");
+  const aboutText = document.getElementById("ctf-about-text");
+  if (aboutSection && aboutText) {
+    if (typeof page.about === "string" && page.about.trim()) {
+      aboutText.textContent = "";
+      const rendered = renderMarkdown(page.about);
+      const tmp = document.createElement("div");
+      tmp.innerHTML = rendered;
+      while (tmp.firstChild) aboutText.appendChild(tmp.firstChild);
+      aboutSection.hidden = false;
+    } else {
+      aboutSection.hidden = true;
+    }
+  }
+  const maxLen = Number(page.maxInputLength);
+  if (Number.isFinite(maxLen)) {
+    window.__ctfMaxInput = Math.min(1000, Math.max(10, Math.trunc(maxLen)));
   }
 }
 
@@ -36,12 +95,18 @@ function isValidChallenge(c) {
   );
 }
 
+function diffPill(d) {
+  const info = d && typeof d === "object" ? d : { id: "misc", label: String(d || "misc"), color: "#94a3b8" };
+  const color = /^#[0-9a-fA-F]{6}$/.test(info.color || "") ? info.color : "#94a3b8";
+  return `<span class="ctf-badge ctf-badge-diff" style="color:${escAttr(color)};border-color:${escAttr(color)}55;background:${escAttr(color)}14">${esc(info.label || info.id)}</span>`;
+}
+
 function renderChallenges(challenges) {
   const grid = document.getElementById("ctf-grid");
   if (!grid) return;
+  const maxInput = window.__ctfMaxInput || 200;
 
   grid.innerHTML = challenges.map((c) => {
-    const difficulty = DIFFICULTIES.has(c.difficulty) ? c.difficulty : "easy";
     const solvedBadge = `<span class="ctf-badge ctf-badge-solved" id="solved-${escAttr(c.id)}" hidden>Solved</span>`;
     const files = Array.isArray(c.attachments) ? c.attachments.filter(isValidAttachment) : [];
     const filesHtml = files.length === 0 ? "" : `
@@ -58,14 +123,14 @@ function renderChallenges(challenges) {
         <div class="ctf-card-meta">
           ${solvedBadge}
           <span class="ctf-badge ctf-badge-category">${esc(c.category || "misc")}</span>
-          <span class="ctf-badge ctf-badge-${difficulty}">${esc(difficulty)}</span>
+          ${diffPill(c.difficulty)}
         </div>
       </div>
       <p class="ctf-card-desc">${renderMarkdown(c.description)}</p>
       ${filesHtml}
       <form class="ctf-form" data-challenge-id="${escAttr(c.id)}">
         <input type="text" class="ctf-input" name="flag" placeholder="flag{...}"
-          autocomplete="off" spellcheck="false" maxlength="200" aria-label="Flag for ${escAttr(c.title)}">
+          autocomplete="off" spellcheck="false" maxlength="${maxInput}" aria-label="Flag for ${escAttr(c.title)}">
         <button type="submit" class="btn btn-primary">Submit</button>
       </form>
       <div class="ctf-result" id="result-${escAttr(c.id)}" aria-live="polite"></div>
@@ -110,7 +175,10 @@ async function handleSubmit(e) {
     const data = await res.json();
 
     if (res.status === 429) {
-      resultEl.textContent = "Too many attempts. Wait a minute and try again.";
+      resultEl.textContent = "Too many attempts. Wait a bit and try again.";
+      resultEl.className = "ctf-result ctf-result-rate";
+    } else if (res.status === 503) {
+      resultEl.textContent = "Challenges are currently unavailable. Check back soon.";
       resultEl.className = "ctf-result ctf-result-rate";
     } else if (data && data.correct === true) {
       resultEl.textContent = "Correct! Nicely done.";

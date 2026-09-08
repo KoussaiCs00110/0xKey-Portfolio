@@ -73,10 +73,10 @@
         <span class="breadcrumb-sep">/</span>
         <span class="breadcrumb-current">CTF</span>
       </nav>
-      <h1 class="articles-page-title">
+      <h1 class="articles-page-title" id="ctf-page-title">
         <span class="title-num">~/</span>CTF Challenges
       </h1>
-      <p class="articles-page-desc">
+      <p class="articles-page-desc" id="ctf-page-intro">
         A hands-on space where I practice and share CTF-style security challenges —
         the same skills behind my work in reverse engineering, digital forensics,
         and web exploitation. Pick a challenge, find the flag, submit it below.
@@ -96,6 +96,16 @@
       <div class="ctf-empty" id="ctf-empty" hidden>
         <span class="ctf-empty-icon">⚠️</span>
         <p>Could not load challenges. Check your connection and refresh the page.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- About this page (admin-configurable; hidden when empty) -->
+  <section class="section" id="ctf-about-section" style="padding-top: 0;" hidden>
+    <div class="container">
+      <h2 class="section-title reveal"><span class="title-num">02.</span> About This Page</h2>
+      <div class="ctf-about-card reveal visible">
+        <p id="ctf-about-text"></p>
       </div>
     </div>
   </section>

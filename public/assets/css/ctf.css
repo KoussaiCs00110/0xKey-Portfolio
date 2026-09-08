@@ -102,20 +102,9 @@
   background: rgba(16, 185, 129, 0.08);
   border: 1px solid var(--border);
 }
-.ctf-badge-easy {
-  color: #10b981;
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.25);
-}
-.ctf-badge-medium {
-  color: #f59e0b;
-  background: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.25);
-}
-.ctf-badge-hard {
-  color: var(--secondary);
-  background: rgba(225, 29, 72, 0.12);
-  border: 1px solid rgba(225, 29, 72, 0.25);
+/* Difficulty pill: colors come from site settings via inline style. */
+.ctf-badge-diff {
+  border: 1px solid var(--muted);
 }
 .ctf-badge-solved {
   color: #0a0a1a;
@@ -232,12 +221,39 @@
   margin-bottom: 1rem;
 }
 
+/* === ABOUT CARD (admin-configurable text; hidden when empty) === */
+#ctf-about-section[hidden] { display: none; }
+.ctf-about-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 2rem;
+  backdrop-filter: blur(12px);
+  max-width: 800px;
+}
+.ctf-about-card p {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.8;
+}
+.ctf-about-card strong { color: var(--text); }
+.ctf-about-card .ctf-md-code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  color: var(--primary);
+}
+.ctf-about-card .ctf-md-link { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
+
 /* === RESPONSIVE (same breakpoints as style.css) === */
 @media (max-width: 680px) {
   .ctf-form { flex-direction: column; }
   .ctf-form .btn { width: 100%; justify-content: center; }
   .ctf-card-header { flex-direction: column; align-items: flex-start; }
   .ctf-card-meta { justify-content: flex-start; }
+  .ctf-about-card { padding: 1.4rem; }
   .ctf-intro-actions { flex-direction: column; }
   .ctf-intro-actions .btn { width: 100%; justify-content: center; }
 }

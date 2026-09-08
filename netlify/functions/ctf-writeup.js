@@ -1,6 +1,7 @@
 const crypto = require("crypto");
-const { loadChallenges } = require("./lib/store");
+const { ensureSettings } = require("./lib/store");
 const { json } = require("./lib/http");
+const { maxFlagLength } = require("./lib/validate");
 
 exports.handler = async (event) => {
   // Generic error used for every failure so valid/invalid challenge IDs
@@ -30,15 +31,25 @@ exports.handler = async (event) => {
     return denied();
   }
 
-  const normalized = answer.trim();
-  if (normalized.length === 0 || normalized.length > 200) {
+  const { settings, challenges } = await ensureSettings();
+
+  if (settings.pageEnabled === false) {
     return denied();
   }
 
-  const list = await loadChallenges();
-  const challenge = list.find((x) => x.id === challengeId);
+  const normalized = answer.trim();
+  if (normalized.length === 0 || normalized.length > maxFlagLength(settings)) {
+    return denied();
+  }
+
+  const challenge = challenges.find((x) => x.id === challengeId);
   // Drafts and soft-deleted challenges never reveal writeups.
   if (!challenge || challenge.deleted || challenge.status !== "published") {
+    return denied();
+  }
+
+  // Global kill-switch for writeups.
+  if (settings.writeupsEnabled === false) {
     return denied();
   }
 

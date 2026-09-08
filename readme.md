@@ -67,12 +67,19 @@ Netlify Blobs for challenge storage · Netlify Forms for the contact form.
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| GET | `/api/ctf/challenges` | — | Published challenges (no salt/hash) |
-| POST | `/api/ctf/check` | — | `{ challengeId, answer }` → `{ correct }` |
-| POST | `/api/ctf/writeup` | — | Writeup, only with correct flag |
-| GET | `/api/ctf/attachment?id=&file=` | — | Published challenge files |
+| GET | `/api/ctf/challenges` | — | `{ page, challenges }`: page config + published challenges (no salt/hash) |
+| POST | `/api/ctf/check` | — | `{ challengeId, answer }` → `{ correct }` (rate-limited, disable-aware) |
+| POST | `/api/ctf/writeup` | — | Writeup, only with correct flag (global toggle) |
+| GET | `/api/ctf/attachment?id=&file=` | — | Challenge files (published-gating toggle) |
 | GET/POST | `/api/admin/ctf/challenges` | Bearer | Admin list / create |
-| GET/PUT/DELETE | `/api/admin/ctf/challenges/:id` | Bearer | Admin read / edit / soft-delete |
+| GET/PUT/DELETE | `/api/admin/ctf/challenges/:id` | Bearer | Read / edit (concurrency-checked) / soft-delete; `?purge=true` destroys + cleans files |
+| GET/PUT | `/api/admin/ctf/settings` | Bearer | Page content, categories, difficulties, behavior |
+
+Page settings (`ctf-settings.json`, auto-created on first read): page title,
+intro/about text (empty about hides the section), page on/off toggle, category
+list (stable ids — renames propagate, in-use entries can't be deleted),
+difficulty levels (label/color/order), rate-limit thresholds, max input length,
+writeups toggle, attachment published-gating toggle.
 
 ## Security model (CTF)
 

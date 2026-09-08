@@ -2,11 +2,13 @@
 //   GET    → single challenge (admin view, no secrets)
 //   PUT    → edit (flag optional: new plaintext re-hashes with a fresh salt;
 //            omit it to keep the existing hash). Supports restore via
-//            { deleted: false } and file add/remove.
+//            { deleted: false } and file add/remove. Requires
+//            expectedUpdatedAt for optimistic concurrency (409 on conflict).
 //   DELETE → soft delete (deleted=true), links/writeups stay resolvable.
+//   DELETE ?purge=true → permanent delete + attachment cleanup.
 const crypto = require("crypto");
 const { requireAdmin } = require("./lib/auth");
-const { loadChallenges, saveChallenges, putAttachment, deleteAttachment } = require("./lib/store");
+const { ensureSettings, saveChallenges, putAttachment, deleteAttachment } = require("./lib/store");
 const { json, auditLog, toAdminChallenge } = require("./lib/http");
 const {
   validateChallengeInput,
@@ -27,6 +29,11 @@ function getId(event) {
   const id = params.id || "";
   if (typeof id !== "string" || id.length === 0 || id.length > 100) return null;
   return id;
+}
+
+function isPurge(event) {
+  const params = event.queryStringParameters || {};
+  return params.purge === "true" || params.purge === "1";
 }
 
 function processFiles(body, errors) {
@@ -74,15 +81,25 @@ exports.handler = async (event) => {
   const id = getId(event);
   if (!id) return json(400, { error: "missing id" });
 
-  const list = await loadChallenges();
-  const challenge = list.find((c) => c.id === id);
-  if (!challenge) return json(404, { error: "not found" });
+  const { settings, challenges: list } = await ensureSettings();
+  const ix = list.findIndex((c) => c.id === id);
+  if (ix === -1) return json(404, { error: "not found" });
+  const challenge = list[ix];
 
   if (event.httpMethod === "GET") {
-    return json(200, toAdminChallenge(challenge));
+    return json(200, toAdminChallenge(challenge, settings));
   }
 
   if (event.httpMethod === "DELETE") {
+    if (isPurge(event)) {
+      for (const a of challenge.attachments || []) {
+        await deleteAttachment(id, a.name);
+      }
+      list.splice(ix, 1);
+      await saveChallenges(list);
+      auditLog({ actor: admin, action: "ctf.purge", challengeId: id, title: challenge.title });
+      return json(200, { ok: true, purged: true });
+    }
     if (!challenge.deleted) {
       challenge.deleted = true;
       challenge.deletedAt = new Date().toISOString();
@@ -104,7 +121,16 @@ exports.handler = async (event) => {
       return json(400, { error: "invalid JSON" });
     }
 
-    const { ok, errors, clean } = validateChallengeInput(body, { isCreate: false });
+    // Optimistic concurrency: refuse to overwrite a newer edit.
+    if (body.expectedUpdatedAt !== challenge.updatedAt) {
+      return json(409, {
+        error: "conflict",
+        message: "This challenge was modified by someone else. Reload and re-apply your changes.",
+        current: toAdminChallenge(challenge, settings)
+      });
+    }
+
+    const { ok, errors, clean } = validateChallengeInput(body, { isCreate: false, settings });
     const files = processFiles(body, errors);
     if (!ok || !files) return json(400, { errors });
 
@@ -139,16 +165,16 @@ exports.handler = async (event) => {
     challenge.attachments = remaining;
     for (const f of files.adds) {
       await putAttachment(id, f.name, f.buffer, f.contentType);
-      const ix = challenge.attachments.findIndex((a) => a.name === f.name);
+      const fix = challenge.attachments.findIndex((a) => a.name === f.name);
       const meta = { name: f.name, contentType: f.contentType, size: f.size };
-      if (ix === -1) challenge.attachments.push(meta);
-      else challenge.attachments[ix] = meta;
+      if (fix === -1) challenge.attachments.push(meta);
+      else challenge.attachments[fix] = meta;
     }
     challenge.updatedAt = new Date().toISOString();
 
     await saveChallenges(list);
     auditLog({ actor: admin, action: "ctf.update", challengeId: id, title: challenge.title });
-    return json(200, toAdminChallenge(challenge));
+    return json(200, toAdminChallenge(challenge, settings));
   }
 
   return json(405, { error: "method not allowed" });

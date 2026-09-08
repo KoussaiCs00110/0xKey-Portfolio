@@ -3,7 +3,7 @@
 //   POST /api/admin/ctf/challenges  → create (plaintext flag hashed, then discarded)
 const crypto = require("crypto");
 const { requireAdmin } = require("./lib/auth");
-const { loadChallenges, saveChallenges, putAttachment, deleteAttachment } = require("./lib/store");
+const { ensureSettings, saveChallenges, putAttachment } = require("./lib/store");
 const { json, auditLog, toAdminChallenge } = require("./lib/http");
 const {
   validateChallengeInput,
@@ -66,9 +66,12 @@ exports.handler = async (event) => {
   if (!admin) return json(401, { error: "unauthorized" });
 
   if (event.httpMethod === "GET") {
-    const list = await loadChallenges();
-    const sorted = [...list].sort((a, b) => (a.order || 0) - (b.order || 0));
-    return json(200, sorted.map(toAdminChallenge));
+    const { settings, challenges } = await ensureSettings();
+    const sorted = [...challenges].sort((a, b) => (a.order || 0) - (b.order || 0));
+    return json(200, {
+      settingsUpdatedAt: settings.updatedAt,
+      challenges: sorted.map((c) => toAdminChallenge(c, settings))
+    });
   }
 
   if (event.httpMethod === "POST") {
@@ -82,11 +85,11 @@ exports.handler = async (event) => {
       return json(400, { error: "invalid JSON" });
     }
 
-    const { ok, errors, clean } = validateChallengeInput(body, { isCreate: true });
+    const { settings, challenges: list } = await ensureSettings();
+    const { ok, errors, clean } = validateChallengeInput(body, { isCreate: true, settings });
     const files = processFiles(body, errors);
     if (!ok || !files) return json(400, { errors });
 
-    const list = await loadChallenges();
     if (files.length > MAX_FILES_PER_CHALLENGE) {
       return json(400, { errors: [`at most ${MAX_FILES_PER_CHALLENGE} attachments`] });
     }
@@ -122,7 +125,7 @@ exports.handler = async (event) => {
     list.push(challenge);
     await saveChallenges(list);
     auditLog({ actor: admin, action: "ctf.create", challengeId: challenge.id, title: challenge.title });
-    return json(201, toAdminChallenge(challenge));
+    return json(201, toAdminChallenge(challenge, settings));
   }
 
   return json(405, { error: "method not allowed" });

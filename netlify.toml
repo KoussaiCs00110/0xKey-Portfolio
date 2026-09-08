@@ -68,6 +68,11 @@
   to = "/.netlify/functions/ctf-admin-challenges"
   status = 200
 
+[[redirects]]
+  from = "/api/admin/ctf/settings"
+  to = "/.netlify/functions/ctf-admin-settings"
+  status = 200
+
 [[headers]]
   for = "/oxkeyisbelouadahsaadedinnekoussai2007/css/admin.css"
   [headers.values]

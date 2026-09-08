@@ -25,13 +25,31 @@ function auditLog(entry) {
 
 // Admin-facing view of a challenge: everything except secrets.
 // salt / flagHash / plaintext flag are NEVER included.
-function toAdminChallenge(c) {
+// category/difficulty are stored as ids; resolved display values included
+// so the admin UI never has to guess.
+function categoryName(settings, id) {
+  const hit = settings && Array.isArray(settings.categories)
+    ? settings.categories.find((c) => c.id === id)
+    : null;
+  return hit ? hit.name : id;
+}
+
+function difficultyInfo(settings, id) {
+  const hit = settings && Array.isArray(settings.difficulties)
+    ? settings.difficulties.find((d) => d.id === id)
+    : null;
+  return hit ? { id: hit.id, label: hit.label, color: hit.color } : { id, label: id, color: "#94a3b8" };
+}
+
+function toAdminChallenge(c, settings) {
   return {
     id: c.id,
     title: c.title,
     description: c.description,
     category: c.category,
+    categoryName: categoryName(settings, c.category),
     difficulty: c.difficulty,
+    difficultyInfo: difficultyInfo(settings, c.difficulty),
     status: c.status,
     deleted: Boolean(c.deleted),
     deletedAt: c.deletedAt || null,
@@ -51,4 +69,4 @@ function toAdminChallenge(c) {
   };
 }
 
-module.exports = { jsonHeaders, json, auditLog, toAdminChallenge };
+module.exports = { jsonHeaders, json, auditLog, toAdminChallenge, categoryName, difficultyInfo };

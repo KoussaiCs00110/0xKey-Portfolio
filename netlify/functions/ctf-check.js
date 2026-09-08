@@ -1,24 +1,35 @@
 const crypto = require("crypto");
-const { loadChallenges } = require("./lib/store");
+const { ensureSettings } = require("./lib/store");
 const { json } = require("./lib/http");
+const { maxFlagLength } = require("./lib/validate");
 
 const rateLimitStore = new Map();
-const MAX_ATTEMPTS = 10;
-const WINDOW_MS = 60 * 1000;
 // Bound memory in long-lived instances: drop oldest keys past this cap.
 const MAX_KEYS = 2000;
 
-function isRateLimited(key) {
+function rateParams(settings) {
+  const rl = (settings && settings.rateLimit) || {};
+  const maxAttempts =
+    Number.isFinite(+rl.maxAttempts) ? Math.trunc(+rl.maxAttempts) : 10;
+  const windowSeconds =
+    Number.isFinite(+rl.windowSeconds) ? Math.trunc(+rl.windowSeconds) : 60;
+  return {
+    maxAttempts: Math.min(1000, Math.max(1, maxAttempts)),
+    windowMs: Math.min(3600000, Math.max(10000, windowSeconds * 1000))
+  };
+}
+
+function isRateLimited(key, maxAttempts, windowMs) {
   const now = Date.now();
   const entry = rateLimitStore.get(key);
   if (!entry) return false;
-  const filtered = entry.filter((ts) => now - ts < WINDOW_MS);
+  const filtered = entry.filter((ts) => now - ts < windowMs);
   if (filtered.length === 0) {
     rateLimitStore.delete(key);
     return false;
   }
   rateLimitStore.set(key, filtered);
-  return filtered.length >= MAX_ATTEMPTS;
+  return filtered.length >= maxAttempts;
 }
 
 function recordAttempt(key) {
@@ -67,20 +78,29 @@ exports.handler = async (event) => {
     return json(400, { correct: false });
   }
 
+  const { settings, challenges } = await ensureSettings();
+
+  if (settings.pageEnabled === false) {
+    return json(503, { correct: false });
+  }
+
+  const maxLen = maxFlagLength(settings);
   const normalized = answer.trim();
-  if (normalized.length === 0 || normalized.length > 200) {
+  if (normalized.length === 0 || normalized.length > maxLen) {
     return json(400, { correct: false });
   }
 
-  // Rate limit is per challenge per IP, per spec.
+  // Rate limit is per challenge per IP; thresholds come from site settings
+  // (admin-configurable, no restart needed).
+  const { maxAttempts, windowMs } = rateParams(settings);
   const limitKey = `${ip}:${challengeId}`;
-  if (isRateLimited(limitKey)) {
+  if (isRateLimited(limitKey, maxAttempts, windowMs)) {
     // Same generic shape as any failure: { correct: boolean } only.
     return json(429, { correct: false });
   }
   recordAttempt(limitKey);
 
-  const challenge = lookup(await loadChallenges(), challengeId);
+  const challenge = lookup(challenges, challengeId);
   if (!challenge) {
     console.log(JSON.stringify({ ip, challengeId, timestamp: Date.now(), result: "not_found" }));
     return json(200, { correct: false });
