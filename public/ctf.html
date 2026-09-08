@@ -100,33 +100,6 @@
     </div>
   </section>
 
-  <!-- About this page -->
-  <section class="section" id="ctf-about" style="padding-top: 0;">
-    <div class="container">
-      <h2 class="section-title reveal"><span class="title-num">02.</span> About This Page</h2>
-      <div class="ctf-about-card reveal">
-        <p>
-          This page is a full-stack project: a static frontend with
-          <strong>zero flag logic in the browser</strong>, backed by serverless API
-          endpoints. Flags are stored server-side only as salted SHA-256 hashes
-          (unique random salt per challenge) and every submission is verified with
-          a timing-safe comparison.
-        </p>
-        <ul class="ctf-about-list">
-          <li><span>Submissions are rate-limited</span> to keep brute-forcing impractical.</li>
-          <li><span>Oversized or empty input</span> is rejected before any hashing happens.</li>
-          <li><span>Failure responses are generic</span> — a wrong flag and an unknown challenge look identical.</li>
-          <li><span>Writeups unlock only after</span> the server confirms a correct flag — never bundled in advance.</li>
-        </ul>
-        <p class="ctf-about-stack">
-          Stack: static HTML/CSS/JS frontend · Netlify Functions (Node.js) + Netlify Blobs backend ·
-          SHA-256 + per-challenge salts · challenges managed from the site admin panel (draft/publish,
-          file attachments, gated writeups) · fetch-based flag submission.
-        </p>
-      </div>
-    </div>
-  </section>
-
   <!-- Footer -->
   <footer class="footer">
     <div class="container">

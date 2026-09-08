@@ -232,58 +232,12 @@
   margin-bottom: 1rem;
 }
 
-/* === ABOUT CARD === */
-.ctf-about-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  padding: 2rem;
-  backdrop-filter: blur(12px);
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  max-width: 800px;
-}
-.ctf-about-card p {
-  color: var(--muted);
-  font-size: 0.9rem;
-  line-height: 1.8;
-}
-.ctf-about-card strong { color: var(--text); }
-.ctf-about-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  padding-left: 0.25rem;
-}
-.ctf-about-list li {
-  position: relative;
-  padding-left: 1.5rem;
-  color: var(--muted);
-  font-size: 0.88rem;
-  line-height: 1.65;
-}
-.ctf-about-list li::before {
-  content: '▸';
-  position: absolute;
-  left: 0;
-  color: var(--primary);
-}
-.ctf-about-list li span { color: var(--text); font-weight: 600; }
-.ctf-about-stack {
-  font-family: var(--font-mono) !important;
-  font-size: 0.76rem !important;
-  padding-top: 1.25rem;
-  border-top: 1px solid var(--border);
-}
-
 /* === RESPONSIVE (same breakpoints as style.css) === */
 @media (max-width: 680px) {
   .ctf-form { flex-direction: column; }
   .ctf-form .btn { width: 100%; justify-content: center; }
   .ctf-card-header { flex-direction: column; align-items: flex-start; }
   .ctf-card-meta { justify-content: flex-start; }
-  .ctf-about-card { padding: 1.4rem; }
   .ctf-intro-actions { flex-direction: column; }
   .ctf-intro-actions .btn { width: 100%; justify-content: center; }
 }
